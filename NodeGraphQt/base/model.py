@@ -26,10 +26,34 @@ class PortModel(object):
         self.visible = True
         self.locked = False
         self.connected_ports = defaultdict(list)
-
+        # Custom
+        self._custom_prop = {}
+        
     def __repr__(self):
         return '<{}(\'{}\') object at {}>'.format(
             self.__class__.__name__, self.name, hex(id(self)))
+
+    def add_property(self, name, value):
+        """
+        add custom property.
+
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        if name in self._custom_prop.keys():
+            raise NodePropertyError(
+                '"{}" property already exists.'.format(name))
+        self._custom_prop[name] = value
+
+    def set_property(self, name, value):
+        if name in self._custom_prop.keys():
+            self._custom_prop[name] = value
+        else:
+            raise NodePropertyError('No property "{}"'.format(name))
+
+    def get_property(self, name):
+        return self._custom_prop.get(name)
 
     @property
     def to_dict(self):
@@ -45,6 +69,7 @@ class PortModel(object):
                     'multi_connection': False,
                     'visible': True,
                     'locked': False,
+                    'connector_type': None
                     'connected_ports': {<node_id>: [<port_name>, <port_name>]}
                 }
         """
@@ -116,7 +141,7 @@ class NodeModel(object):
             self.__class__.__name__, self.name, self.id)
 
     def add_property(self, name, value, items=None, range=None,
-                     widget_type=NODE_PROP, tab=None):
+                     widget_type=NODE_PROP, tab=None, extra=None):
         """
         add custom property.
 
@@ -127,6 +152,7 @@ class NodeModel(object):
             range (tuple)): min, max values used by NODE_PROP_SLIDER.
             widget_type (int): widget type flag.
             tab (str): widget tab name.
+            extra (object): any additional custom values
         """
         tab = tab or 'Properties'
 
@@ -146,6 +172,8 @@ class NodeModel(object):
                 self._TEMP_property_attrs[name]['items'] = items
             if range:
                 self._TEMP_property_attrs[name]['range'] = range
+            if extra:
+                self._TEMP_property_attrs[name]['extra'] = extra
         else:
             attrs = {self.type_: {name: {
                 'widget_type': widget_type,
@@ -155,6 +183,8 @@ class NodeModel(object):
                 attrs[self.type_][name]['items'] = items
             if range:
                 attrs[self.type_][name]['range'] = range
+            if extra:
+                attrs[self.type_][name]['extra'] = extra
             self._graph_model.set_node_common_properties(attrs)
 
     def set_property(self, name, value):
@@ -184,6 +214,25 @@ class NodeModel(object):
                 return attrs[name].get('tab')
             return
         return model.get_node_common_properties(self.type_)[name]['tab']
+
+    def get_extra(self, name):
+        model = self._graph_model
+        if model is None:
+            attrs = self._TEMP_property_attrs.get(name)
+            if attrs:
+                return attrs[name].get('extra')
+            return None
+        if 'extra' in model.get_node_common_properties(self.type_)[name]:
+            return model.get_node_common_properties(self.type_)[name]['extra']
+        return None
+
+
+    def set_extra(self, name, extra):
+        model = self._graph_model
+        if model is None:
+            self._TEMP_property_attrs[name]['extra'] = extra
+        else:
+            model.get_node_common_properties(self.type_)[name]['extra'] = extra
 
     @property
     def properties(self):

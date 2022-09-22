@@ -31,6 +31,7 @@ class PortItem(QtWidgets.QGraphicsItem):
         self._port_type = None
         self._multi_connection = False
         self._locked = False
+        self._display_mode = PortEnum.DISPLAY_MODE_DEFAULT
 
     def __str__(self):
         return '{}.PortItem("{}")'.format(self.__module__, self.name)

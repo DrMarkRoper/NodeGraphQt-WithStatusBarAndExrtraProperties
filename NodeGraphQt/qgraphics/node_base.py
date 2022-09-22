@@ -45,6 +45,11 @@ class NodeItem(AbstractNodeItem):
         self._widgets = OrderedDict()
         self._proxy_mode = False
         self._proxy_mode_threshold = 70
+        self._properties['status_color'] = NodeEnum.STATUS_COLOR_PENDING.value
+        self._properties['status_display_mode'] = NodeEnum.STATUS_DISPLAY_MODE_BAR.value
+        self._properties['status_percent'] = 100
+        self._properties['status_block_count'] = 1
+        self._properties['status_blocks'] = []
 
     def paint(self, painter, option, widget):
         """
@@ -80,21 +85,69 @@ class NodeItem(AbstractNodeItem):
             painter.drawRoundedRect(rect, radius, radius)
 
         # node name background.
-        padding = 3.0, 2.0
+        padding = 0.0, 0.0
         text_rect = self._text_item.boundingRect()
         text_rect = QtCore.QRectF(text_rect.x() + padding[0],
                                   rect.y() + padding[1],
-                                  rect.width() - padding[0] - margin,
+                                  rect.width() - padding[0],
                                   text_rect.height() - (padding[1] * 2))
         if self.selected:
-            painter.setBrush(QtGui.QColor(*NodeEnum.SELECTED_COLOR.value))
+            #painter.setBrush(QtGui.QColor(*NodeEnum.SELECTED_COLOR.value))
+            painter.setBrush(QtGui.QColor(*NodeEnum.SELECTED_TITLE_COLOR.value))
         else:
             painter.setBrush(QtGui.QColor(0, 0, 0, 80))
-        painter.drawRoundedRect(text_rect, 3.0, 3.0)
+        painter.drawRoundedRect(text_rect, 2.0, 2.0)
+
+        # node status bar
+        status_bar_height = 2
+        if self._properties['status_display_mode'] == NodeEnum.STATUS_DISPLAY_MODE_NONE.value:
+            pass
+        else:
+            # Draw a pending bar, everything else will overwrite this as necessary
+            status_rect = QtCore.QRectF(rect.x() + margin,
+                                      text_rect.y() + text_rect.height(),
+                                      rect.width() - (margin * 2),
+                                      status_bar_height)
+            painter.setBrush(QtGui.QColor(*NodeEnum.STATUS_COLOR_PENDING.value))
+            painter.drawRect(status_rect)
+
+            if self._properties['status_display_mode'] == NodeEnum.STATUS_DISPLAY_MODE_BAR.value:
+                status_rect = QtCore.QRectF(rect.x() + margin,
+                                      text_rect.y() + text_rect.height(),
+                                      rect.width() - (margin * 2),
+                                      status_bar_height)
+                painter.setBrush(QtGui.QColor(*self._properties['status_color']))
+                painter.drawRect(status_rect)
+
+            elif self._properties['status_display_mode'] == NodeEnum.STATUS_DISPLAY_MODE_PERCENT:
+                status_rect = QtCore.QRectF(rect.x() + margin,
+                                          text_rect.y() + text_rect.height(),
+                                          int(rect.width() / 100 * self._properties['status_percent']) - (margin * 2),
+                                          status_bar_height)
+                painter.setBrush(QtGui.QColor(*self._properties['status_color']))
+                painter.drawRect(status_rect)
+            elif self._properties['status_display_mode'] == NodeEnum.STATUS_DISPLAY_MODE_BLOCKS:
+                width_per_block = int((rect.width() - (margin * 2)) / max(self._properties['status_block_count'], len(self._properties['status_blocks'])))
+                start_x = 0
+                for block_item in self._properties['status_blocks']:
+                    status_rect = QtCore.QRectF(margin + start_x,
+                                              text_rect.y() + text_rect.height(),
+                                              width_per_block,
+                                              status_bar_height)
+                    painter.setBrush(QtGui.QColor(*block_item))
+                    painter.drawRect(status_rect)
+                    start_x = start_x + width_per_block
+                    status_rect = QtCore.QRectF(margin + start_x - 1,
+                                              text_rect.y() + text_rect.height(),
+                                              1,
+                                              status_bar_height)
+                    qt_black = (0, 0, 0, 255)
+                    painter.setBrush(QtGui.QColor(*qt_black))
+                    painter.drawRect(status_rect)
 
         # node border
         if self.selected:
-            border_width = 1.2
+            border_width = NodeEnum.SELECTED_BORDER_WIDTH.value
             border_color = QtGui.QColor(
                 *NodeEnum.SELECTED_BORDER_COLOR.value
             )
@@ -540,6 +593,61 @@ class NodeItem(AbstractNodeItem):
 
         self.update()
 
+    @property
+    def status_color(self):
+        return self._properties['status_color']
+
+    @status_color.setter
+    def status_color(self, color=NodeEnum.STATUS_COLOR_PENDING.value):
+        self._properties['status_color'] = color
+        if self.scene():
+            self.post_init()
+        self.update()
+
+    @property
+    def status_display_mode(self):
+        return self._properties['status_display_mode']
+
+    @status_display_mode.setter
+    def status_display_mode(self, display_mode=NodeEnum.STATUS_DISPLAY_MODE_BAR):
+        self._properties['status_display_mode'] = display_mode
+        if self.scene():
+            self.post_init()
+        self.update()
+
+    @property
+    def status_percent(self):
+        return self._properties['status_percent']
+
+    @status_percent.setter
+    def status_percent(self, percent=100):
+        self._properties['status_percent'] = percent
+        if self.scene():
+            self.post_init()
+        self.update()
+
+    @property
+    def status_block_count(self):
+        return self._properties['status_block_count']
+
+    @status_block_count.setter
+    def status_block_count(self, block_count=1):
+        self._properties['status_block_count'] = block_count
+        if self.scene():
+            self.post_init()
+        self.update()
+
+    @property
+    def status_blocks(self):
+        return self._properties['status_block_count']
+
+    @status_blocks.setter
+    def status_blocks(self, blocks=[]):
+        self._properties['status_blocks'] = blocks
+        if self.scene():
+            self.post_init()
+        self.update()
+
     @AbstractNodeItem.width.setter
     def width(self, width=0.0):
         w, h = self.calc_size()
@@ -836,7 +944,7 @@ class NodeItemVertical(NodeItem):
         border_width = 0.8
         border_color = QtGui.QColor(*self.border_color)
         if self.selected:
-            border_width = 1.2
+            border_width = NodeEnum.SELECTED_BORDER_WIDTH.value
             border_color = QtGui.QColor(
                 *NodeEnum.SELECTED_BORDER_COLOR.value
             )

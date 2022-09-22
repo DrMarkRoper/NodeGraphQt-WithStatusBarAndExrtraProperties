@@ -75,7 +75,7 @@ class ViewerEnum(Enum):
     :py:mod:`NodeGraphQt.constants.ViewerEnum`
     """
     #: default background color for the node graph.
-    BACKGROUND_COLOR = (35, 35, 35)
+    BACKGROUND_COLOR = (200, 200, 200)
     #: style node graph background with no grid or dots.
     GRID_DISPLAY_NONE = 0
     #: style node graph background with dots.
@@ -114,8 +114,33 @@ class NodeEnum(Enum):
     ICON_SIZE = 18
     #: default node overlay color when selected.
     SELECTED_COLOR = (255, 255, 255, 30)
+    #: default selected node title background color
+    SELECTED_TITLE_COLOR = (45, 109, 209, 255)
     #: default node border color when selected.
-    SELECTED_BORDER_COLOR = (254, 207, 42, 255)
+    #SELECTED_BORDER_COLOR = (254, 207, 42, 255)
+    SELECTED_BORDER_COLOR = SELECTED_TITLE_COLOR
+    #SELECTED_BORDER_WIDTH = 1.2
+    SELECTED_BORDER_WIDTH = 2.5
+
+    STATUS_COLOR_PENDING = (125, 125, 125, 255)
+    STATUS_COLOR_RUNNING = (255, 255, 0, 255)
+    STATUS_COLOR_DONE = (51, 204, 51, 255)
+    STATUS_COLOR_ERROR = (255, 0, 0, 255)
+    STATUS_COLOR_WARNING = (255, 153, 0, 255)
+
+    STATUS_VALUE_PENDING = 5
+    STATUS_VALUE_RUNNING = 10
+    STATUS_VALUE_DONE = 100
+    STATUS_VALUE_ABORTED_WARNING = 800
+    STATUS_VALUE_WARNING = 850
+    STATUS_VALUE_ABORTED_ERROR = 900
+    STATUS_VALUE_ERROR = 950
+
+
+    STATUS_DISPLAY_MODE_NONE = 0
+    STATUS_DISPLAY_MODE_BAR = 1
+    STATUS_DISPLAY_MODE_PERCENT = 2
+    STATUS_DISPLAY_MODE_BLOCKS = 3
 
 # ==================================== PORT ====================================
 
@@ -128,20 +153,22 @@ class PortEnum(Enum):
     #: default port size.
     SIZE = 22.0
     #: default port color. (r, g, b, a)
-    COLOR = (49, 115, 100, 255)
+    COLOR = (0, 0, 0, 255)
     #: default port border color.
-    BORDER_COLOR = (29, 202, 151, 255)
+    #BORDER_COLOR = (29, 202, 151, 255)
+    BORDER_COLOR = (125, 125, 125, 255)
     #: port color when selected.
-    ACTIVE_COLOR = (14, 45, 59, 255)
+    ACTIVE_COLOR = (255, 255, 255, 255)
     #: port border color when selected.
-    ACTIVE_BORDER_COLOR = (107, 166, 193, 255)
+    ACTIVE_BORDER_COLOR = (125, 125, 125, 255)
     #: port color on mouse over.
-    HOVER_COLOR = (17, 43, 82, 255)
+    HOVER_COLOR = (45, 109, 209, 255)
     #: port border color on mouse over.
-    HOVER_BORDER_COLOR = (136, 255, 35, 255)
+    HOVER_BORDER_COLOR = (45, 109, 209, 255)
     #: threshold for selecting a port.
     CLICK_FALLOFF = 15.0
-
+    #: Display modes
+    DISPLAY_MODE_DEFAULT = 1
 
 class PortTypeEnum(Enum):
     """

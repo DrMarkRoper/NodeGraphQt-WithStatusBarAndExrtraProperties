@@ -303,7 +303,7 @@ class NodeObject(object):
         self.set_property('selected', selected)
 
     def create_property(self, name, value, items=None, range=None,
-                        widget_type=NODE_PROP, tab=None):
+                        widget_type=NODE_PROP, tab=None, extra=None):
         """
         Creates a custom property to the node.
 
@@ -339,8 +339,9 @@ class NodeObject(object):
             widget_type (int): widget flag to display in the
                 :class:`NodeGraphQt.PropertiesBinWidget`
             tab (str): name of the widget tab to display in the properties bin.
+            extra (object): additional details
         """
-        self.model.add_property(name, value, items, range, widget_type, tab)
+        self.model.add_property(name, value, items, range, widget_type, tab, extra)
 
     def properties(self):
         """
