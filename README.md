@@ -5,6 +5,11 @@ applications.
 
 <img src="/docs/_images/screenshot.png" width="100%" title="NodeGraphQt">
 
+#### Setup
+pip install Qt.py
+pip install Pyside2
+python ./basic_example.py
+
 #### API Documentation
 
 <a href="https://jchanvfx.github.io/NodeGraphQt" target="_blank">NodeGraphQt API documentation</a>
