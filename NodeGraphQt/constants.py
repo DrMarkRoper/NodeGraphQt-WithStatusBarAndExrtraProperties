@@ -75,7 +75,7 @@ class ViewerEnum(Enum):
     :py:mod:`NodeGraphQt.constants.ViewerEnum`
     """
     #: default background color for the node graph.
-    BACKGROUND_COLOR = (200, 200, 200)
+    BACKGROUND_COLOR = (35, 35, 35)
     #: style node graph background with no grid or dots.
     GRID_DISPLAY_NONE = 0
     #: style node graph background with dots.
