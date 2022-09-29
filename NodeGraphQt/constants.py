@@ -167,8 +167,6 @@ class PortEnum(Enum):
     HOVER_BORDER_COLOR = (45, 109, 209, 255)
     #: threshold for selecting a port.
     CLICK_FALLOFF = 15.0
-    #: Display modes
-    DISPLAY_MODE_DEFAULT = 1
 
 class PortTypeEnum(Enum):
     """
