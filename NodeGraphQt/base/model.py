@@ -26,10 +26,32 @@ class PortModel(object):
         self.visible = True
         self.locked = False
         self.connected_ports = defaultdict(list)
+        self._custom_prop = {}
 
     def __repr__(self):
         return '<{}(\'{}\') object at {}>'.format(
             self.__class__.__name__, self.name, hex(id(self)))
+
+    def add_property(self, name, value):
+        """
+        add custom property.
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        if name in self._custom_prop.keys():
+            raise NodePropertyError(
+                '"{}" property already exists.'.format(name))
+        self._custom_prop[name] = value
+
+    def set_property(self, name, value):
+        if name in self._custom_prop.keys():
+            self._custom_prop[name] = value
+        else:
+            raise NodePropertyError('No property "{}"'.format(name))
+
+    def get_property(self, name):
+        return self._custom_prop.get(name)
 
     @property
     def to_dict(self):
@@ -45,12 +67,16 @@ class PortModel(object):
                     'multi_connection': False,
                     'visible': True,
                     'locked': False,
-                    'connected_ports': {<node_id>: [<port_name>, <port_name>]}
+                    'connected_ports': {<node_id>: [<port_name>, <port_name>]},
+                    'custom': {},
                 }
         """
         props = self.__dict__.copy()
         props.pop('node')
         props['connected_ports'] = dict(props.pop('connected_ports'))
+        custom_props = dict(props.pop('_custom_prop', {}))
+        if custom_props:
+            props['custom'] = custom_props
         return props
 
 

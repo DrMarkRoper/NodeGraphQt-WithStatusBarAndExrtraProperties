@@ -350,6 +350,58 @@ class Port(object):
             for cp in self.connected_ports():
                 self.disconnect_from(cp, push_undo=False)
 
+    def create_property(self, name, value):
+        """
+        Creates a custom property to the port.
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        self.model.add_property(name, value)
+
+    def properties(self):
+        """
+        Returns all the port properties.
+
+        Returns:
+            dict: a dictionary of node properties.
+        """
+        props = self.model.to_dict.copy()
+        return props
+
+    def get_property(self, name):
+        """
+        Return the port property.
+        Args:
+            name (str): name of the property.
+        Returns:
+            object: property data.
+        """
+        return self.model.get_property(name)
+
+    def set_property(self, name, value):
+        """
+        Set the value on the port property.
+        Args:
+            name (str): name of the property.
+            value (object): property data (python built in types).
+        """
+
+        # prevent signals from causing a infinite loop.
+        if self.get_property(name) == value:
+            return
+        self.model.set_property(name, value)
+
+    def has_property(self, name):
+        """
+        Check if port property exists.
+        Args:
+            name (str): name of the node.
+        Returns:
+            bool: true if property name exists in the Node.
+        """
+        return name in self.model.custom_properties.keys()
+
     @property
     def color(self):
         return self.__view.color
