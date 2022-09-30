@@ -9,7 +9,7 @@ from NodeGraphQt.constants import (
     NODE_PROP_QCHECKBOX,
     NODE_PROP_COLORPICKER
 )
-from NodeGraphQt.errors import NodePropertyError
+from NodeGraphQt.errors import NodePropertyError, PortPropertyError, GraphPropertyError
 
 
 class PortModel(object):
@@ -40,15 +40,15 @@ class PortModel(object):
             value (object): data.
         """
         if name in self._custom_prop.keys():
-            raise NodePropertyError(
-                '"{}" property already exists.'.format(name))
+            raise PortPropertyError(
+                '"{}" Port property already exists.'.format(name))
         self._custom_prop[name] = value
 
     def set_property(self, name, value):
         if name in self._custom_prop.keys():
             self._custom_prop[name] = value
         else:
-            raise NodePropertyError('No property "{}"'.format(name))
+            raise PortPropertyError('No Port property "{}"'.format(name))
 
     def get_property(self, name):
         return self._custom_prop.get(name)
@@ -393,6 +393,7 @@ class NodeGraphModel(object):
         self.session = ''
         self.acyclic = True
         self.pipe_collision = False
+        self._custom_prop = {}
 
     def common_properties(self):
         """
@@ -406,7 +407,8 @@ class NodeGraphModel(object):
                             'widget_type': 0,
                             'tab': 'Properties',
                             'items': ['foo', 'bar', 'test'],
-                            'range': (0, 100)
+                            'range': (0, 100),
+                            'extra': {object}
                             }
                         }
                     }
@@ -425,7 +427,8 @@ class NodeGraphModel(object):
                             'widget_type': 0,
                             'tab': 'Properties',
                             'items': ['foo', 'bar', 'test'],
-                            'range': (0, 100)
+                            'range': (0, 100),
+                            'extra': {object}
                             }
                         }
                     }
@@ -456,6 +459,47 @@ class NodeGraphModel(object):
         """
         return self.__common_node_props.get(node_type)
 
+    def add_property(self, name, value):
+        """
+        add custom property.
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        if name in self._custom_prop.keys():
+            raise GraphPropertyError(
+                '"{}" Graph property already exists.'.format(name))
+        self._custom_prop[name] = value
+
+    def set_property(self, name, value):
+        if name in self._custom_prop.keys():
+            self._custom_prop[name] = value
+        else:
+            raise GraphPropertyError('No Graph property "{}"'.format(name))
+
+    def get_property(self, name):
+        return self._custom_prop.get(name)
+
+    @property
+    def to_dict(self):
+        """
+        serialize model information to a dictionary.
+        Returns:
+            dict: graph dictionary eg.
+                {
+                    'acyclic': True,
+                    'pipe_collision': False,
+                    'custom': {}
+                }
+        """
+        props = self.__dict__.copy()
+        props.pop('nodes')
+        props.pop('session')
+        props.pop('_NodeGraphModel__common_node_props')
+        custom_props = dict(props.pop('_custom_prop', {}))
+        if custom_props:
+            props['custom'] = custom_props
+        return props        
 
 if __name__ == '__main__':
     p = PortModel(None)
