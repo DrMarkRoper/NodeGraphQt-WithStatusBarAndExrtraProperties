@@ -489,7 +489,7 @@ class BaseNode(NodeObject):
                         multi_input=port['multi_connection'],
                         display_name=port['display_name'],
                         locked=port.get('locked') or False)
-            if port.get('custom'):
+            if 'custom' in port.keys():
                 for port_name, port_value in port['custom'].items():
                     new_port.create_property(port_name, port_value)
 
@@ -498,7 +498,7 @@ class BaseNode(NodeObject):
                         multi_output=port['multi_connection'],
                         display_name=port['display_name'],
                         locked=port.get('locked') or False)
-            if port.get('custom'):
+            if 'custom' in port.keys():
                 for port_name, port_value in port['custom'].items():
                     new_port.create_property(port_name, port_value)
 

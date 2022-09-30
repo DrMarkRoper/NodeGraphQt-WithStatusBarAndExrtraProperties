@@ -367,7 +367,7 @@ class Port(object):
             dict: a dictionary of node properties.
         """
         props = self.model.to_dict.copy()
-        return props
+        return props.get('custom', None)
 
     def get_property(self, name):
         """
