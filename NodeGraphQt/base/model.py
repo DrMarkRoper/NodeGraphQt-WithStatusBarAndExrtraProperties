@@ -216,6 +216,28 @@ class NodeModel(object):
             return
         return model.get_node_common_properties(self.type_)[name]['tab']
 
+    def get_property_items(self, name):
+        model = self._graph_model
+        if model is None:
+            attrs = self._TEMP_property_attrs.get(name)
+            if attrs:
+                return attrs[name].get('items')
+            return None
+        if 'items' in model.get_node_common_properties(self.type_)[name]:
+            return model.get_node_common_properties(self.type_)[name]['items']
+        return None
+
+    def get_property_range(self, name):
+        model = self._graph_model
+        if model is None:
+            attrs = self._TEMP_property_attrs.get(name)
+            if attrs:
+                return attrs[name].get('range')
+            return None
+        if 'range' in model.get_node_common_properties(self.type_)[name]:
+            return model.get_node_common_properties(self.type_)[name]['range']
+        return None
+
     def get_property_extra(self, name):
         model = self._graph_model
         if model is None:
@@ -226,7 +248,6 @@ class NodeModel(object):
         if 'extra' in model.get_node_common_properties(self.type_)[name]:
             return model.get_node_common_properties(self.type_)[name]['extra']
         return None
-
 
     def set_property_extra(self, name, extra):
         model = self._graph_model
@@ -335,7 +356,16 @@ class NodeModel(object):
         custom_props = node_dict.pop('_custom_prop', {})
         if custom_props:
             node_dict['custom'] = custom_props
-
+            node_dict['custom_property_data'] = []
+            for prop_name, prop_value in custom_props.items():                
+                custom_prop_data = {'name': prop_name, 
+                                    'value': prop_value, 
+                                    'widget_type': self.get_widget_type(prop_name),
+                                    'tab': self.get_tab_name(prop_name),
+                                    'extra': self.get_property_extra(prop_name),
+                                    'items': self.get_property_items(prop_name),
+                                    'range': self.get_property_range(prop_name)}
+                node_dict['custom_property_data'].append(custom_prop_data)
         exclude = ['_graph_model',
                    '_TEMP_property_attrs',
                    '_TEMP_property_widget_types']
