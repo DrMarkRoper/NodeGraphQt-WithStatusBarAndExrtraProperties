@@ -1310,9 +1310,22 @@ class NodeGraph(QtCore.QObject):
                         node.model.set_property(prop, n_data[prop])
                 # set custom properties.
                 for prop, val in n_data.get('custom', {}).items():
-                    node.model.set_property(prop, val)
+                    if node.has_property(prop):
+                        node.model.set_property(prop, val)
                     if prop in node.view.widgets:
                         node.view.widgets[prop].set_value(val)
+
+                # create custom products which were originally added after node creation
+                if n_data.get('custom_property_data'):
+                    for prop_data in n_data['custom_property_data']:
+                        if not node.has_property(prop):
+                            node.create_property(name=prop_data['name'], 
+                                                value=prop_data['value'], 
+                                                widget_type=prop_data.get('widget_type'),
+                                                tab=prop_data.get('tab'),
+                                                items=prop_data.get('items'),
+                                                range=prop_data.get('range'),
+                                                extra=prop_data.get('extra'))
 
                 nodes[n_id] = node
                 self.add_node(node, n_data.get('pos'))

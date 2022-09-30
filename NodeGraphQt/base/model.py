@@ -323,21 +323,17 @@ class NodeModel(object):
         output_ports = []
         for name, model in node_dict.pop('inputs').items():
             if self.port_deletion_allowed:
-                input_ports.append({
-                    'name': name,
-                    'multi_connection': model.multi_connection,
-                    'display_name': model.display_name,
-                })
+                input_port_data = model.to_dict
+                input_port_data.pop('connected_ports', {})
+                input_ports.append(input_port_data)
             connected_ports = model.to_dict['connected_ports']
             if connected_ports:
                 inputs[name] = connected_ports
         for name, model in node_dict.pop('outputs').items():
             if self.port_deletion_allowed:
-                output_ports.append({
-                    'name': name,
-                    'multi_connection': model.multi_connection,
-                    'display_name': model.display_name,
-                })
+                output_port_data = model.to_dict
+                output_port_data.pop('connected_ports', {})
+                output_ports.append(output_port_data)
             connected_ports = model.to_dict['connected_ports']
             if connected_ports:
                 outputs[name] = connected_ports
