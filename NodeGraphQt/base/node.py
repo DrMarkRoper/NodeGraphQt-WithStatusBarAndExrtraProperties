@@ -341,7 +341,7 @@ class NodeObject(object):
             tab (str): name of the widget tab to display in the properties bin.
             extra (object): additional custom data for this property
         """
-        self.model.add_property(name, value, items, range, widget_type, tab)
+        self.model.add_property(name, value, items, range, widget_type, tab, extra)
 
     def properties(self):
         """
