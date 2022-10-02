@@ -54,6 +54,7 @@ class NodeItem(AbstractNodeItem):
                         'node_base_background_margin': 1.0,
                         'node_name_background_margin': 1.0,
                         'node_name_background_radius': 3.0}
+        self._default_theme = {}
 
     def paint(self, painter, option, widget):
         """
@@ -646,6 +647,7 @@ class NodeItem(AbstractNodeItem):
             self._output_items[port] = text
         if self.scene():
             self.post_init()
+        port.set_theme_items(self._default_theme)
         return port
 
     def add_input(self, name='input', multi_port=False, display_name=True,
@@ -790,7 +792,15 @@ class NodeItem(AbstractNodeItem):
         for item, value in theme_items.items():
             self.set_theme_item(item, value)
 
-
+    def set_default_theme(self, theme, update_current=True):
+        self._default_theme = theme
+        if update_current:
+            self.set_theme_items(theme)
+            for port in self._input_items:
+                port.set_theme_items(theme)
+            for port in self._output_items:
+                port.set_theme_items(theme)
+            
 class NodeItemVertical(NodeItem):
     """
     Vertical Node item.
