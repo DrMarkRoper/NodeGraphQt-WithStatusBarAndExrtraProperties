@@ -1319,7 +1319,11 @@ class NodeGraph(QtCore.QObject):
                 for prop, val in n_data.get('custom', {}).items():
                     if node.has_property(prop):
                         node.model.set_property(prop, val)
-                    if prop in node.view.widgets:
+
+                    if (
+                        node.type_ != 'nodeGraphQt.nodes.BackdropNode' and 
+                        prop in node.view.widgets
+                    ):
                         node.view.widgets[prop].set_value(val)
 
                 # create custom products which were originally added after node creation
