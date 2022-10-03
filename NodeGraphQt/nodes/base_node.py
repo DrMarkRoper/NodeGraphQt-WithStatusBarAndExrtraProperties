@@ -266,6 +266,8 @@ class BaseNode(NodeObject):
         port.model.display_name = display_name
         port.model.multi_connection = multi_input
         port.model.locked = locked
+        if painter_func and callable(painter_func):
+            port.model.painter_func_name = painter_func.__name__
         self._inputs.append(port)
         self.model.inputs[port.name()] = port.model
         return port
@@ -308,6 +310,8 @@ class BaseNode(NodeObject):
         port.model.display_name = display_name
         port.model.multi_connection = multi_output
         port.model.locked = locked
+        if painter_func and callable(painter_func):
+            port.model.painter_func_name = painter_func.__name__
         self._outputs.append(port)
         self.model.outputs[port.name()] = port.model
         return port
@@ -452,6 +456,7 @@ class BaseNode(NodeObject):
                             'display_name': 'Input',
                             'locked': False,
                             'visible': True,
+                            'painter_func_name': 'draw_square_port',
                             'custom': {object}
                         }],
                     'output_ports':
@@ -461,6 +466,7 @@ class BaseNode(NodeObject):
                             'display_name': 'Output',
                             'locked': False,
                             'visible': True,
+                            'painter_func_name': 'draw_square_port',
                             'custom': {object}
                         }]
                 }
@@ -485,19 +491,30 @@ class BaseNode(NodeObject):
         self._model.inputs = {}
 
         for port in port_data['input_ports']:
+            custom_painter = None
+            if 'painter_func_name' in port.keys():
+                from examples.custom_nodes import (custom_ports_node)
+                custom_painter = getattr(custom_ports_node, port['painter_func_name'])
             new_port = self.add_input(name=port['name'],
                         multi_input=port['multi_connection'],
                         display_name=port['display_name'],
-                        locked=port.get('locked') or False)
+                        locked=port.get('locked') or False,
+                        painter_func = custom_painter)
             if 'custom' in port.keys():
                 for port_name, port_value in port['custom'].items():
                     new_port.create_property(port_name, port_value)
-
+            if 'painter_func_name' in port.keys():
+                new_port.model.painter_func_name = port['painter_func_name']
         for port in port_data['output_ports']:
+            custom_painter = None
+            if 'painter_func_name' in port.keys():
+                from examples.custom_nodes import (custom_ports_node)
+                custom_painter = getattr(custom_ports_node, port['painter_func_name'])
             new_port = self.add_output(name=port['name'],
                         multi_output=port['multi_connection'],
                         display_name=port['display_name'],
-                        locked=port.get('locked') or False)
+                        locked=port.get('locked') or False,
+                        painter_func = custom_painter)
             if 'custom' in port.keys():
                 for port_name, port_value in port['custom'].items():
                     new_port.create_property(port_name, port_value)

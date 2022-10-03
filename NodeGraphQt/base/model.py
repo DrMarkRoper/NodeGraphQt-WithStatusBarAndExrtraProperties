@@ -27,6 +27,7 @@ class PortModel(object):
         self.locked = False
         self.connected_ports = defaultdict(list)
         self._custom_prop = {}
+        self.painter_func_name = None
 
     def __repr__(self):
         return '<{}(\'{}\') object at {}>'.format(
@@ -68,6 +69,7 @@ class PortModel(object):
                     'visible': True,
                     'locked': False,
                     'connected_ports': {<node_id>: [<port_name>, <port_name>]},
+                    'painter_func_name': 'draw_square_port',
                     'custom': {},
                 }
         """
@@ -77,6 +79,8 @@ class PortModel(object):
         custom_props = dict(props.pop('_custom_prop', {}))
         if custom_props:
             props['custom'] = custom_props
+        if not props['painter_func_name']:
+            props.pop('painter_func_name')
         return props
 
 
