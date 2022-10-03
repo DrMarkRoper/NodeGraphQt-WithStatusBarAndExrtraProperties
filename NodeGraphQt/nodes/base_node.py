@@ -18,6 +18,7 @@ from NodeGraphQt.widgets.node_widgets import (NodeBaseWidget,
                                               NodeComboBox,
                                               NodeLineEdit,
                                               NodeCheckBox)
+from NodeGraphQt.qgraphics import node_port_custom_painter_funcs
 
 
 class BaseNode(NodeObject):
@@ -493,8 +494,11 @@ class BaseNode(NodeObject):
         for port in port_data['input_ports']:
             custom_painter = None
             if 'painter_func_name' in port.keys():
-                from examples.custom_nodes import (custom_ports_node)
-                custom_painter = getattr(custom_ports_node, port['painter_func_name'])
+                try:
+                    custom_painter = getattr(node_port_custom_painter_funcs, port['painter_func_name'])
+                except:
+                    custom_painter = None
+                    print("Custom painter function not found: " + port['painter_func_name'])
             new_port = self.add_input(name=port['name'],
                         multi_input=port['multi_connection'],
                         display_name=port['display_name'],
@@ -508,8 +512,11 @@ class BaseNode(NodeObject):
         for port in port_data['output_ports']:
             custom_painter = None
             if 'painter_func_name' in port.keys():
-                from examples.custom_nodes import (custom_ports_node)
-                custom_painter = getattr(custom_ports_node, port['painter_func_name'])
+                try:
+                    custom_painter = getattr(node_port_custom_painter_funcs, port['painter_func_name'])
+                except:
+                    custom_painter = None
+                    print("Custom painter function not found: " + port['painter_func_name'])
             new_port = self.add_output(name=port['name'],
                         multi_output=port['multi_connection'],
                         display_name=port['display_name'],
