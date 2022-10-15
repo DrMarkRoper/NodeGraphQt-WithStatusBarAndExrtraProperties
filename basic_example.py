@@ -30,7 +30,25 @@ if __name__ == '__main__':
 
     # create graph controller.
     graph = NodeGraph()
-
+    graph.set_background_color(125, 125, 125)
+    graph.set_default_theme({
+             'node_border_width': 0.8,
+             'node_selected_color': (255, 255, 255, 30),
+             'node_selected_border_color': (45, 109, 209, 255),
+             'node_selected_title_color': (45, 109, 209, 255),
+             'node_selected_border_width': 2.5,                        
+             'node_name_background_padding': [0.0, 0.0],
+             'node_base_background_margin': 1.0,
+             'node_name_background_margin': 0.0,
+             'node_name_background_radius': 2.0,
+            'port_color': (0, 0, 0, 255),
+            'port_border_color': (125, 125, 125, 255),
+            'port_border_size': 1.0,
+            'port_active_color': (255, 255, 255, 255),
+            'port_active_border_color': (125, 125, 125, 255),
+            'port_hover_color': (45, 109, 209, 255),
+            'port_hover_border_color': (45, 109, 209, 255)
+            })
     # registered example nodes.
     graph.register_nodes([
         basic_nodes.BasicNodeA,
