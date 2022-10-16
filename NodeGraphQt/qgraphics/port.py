@@ -25,9 +25,14 @@ class PortItem(QtWidgets.QGraphicsItem):
         self._hovered = False
         self._name = 'port'
         self._display_name = True
-        self._color = PortEnum.COLOR.value
-        self._border_color = PortEnum.BORDER_COLOR.value
-        self._border_size = 1
+        self._theme = {'port_color': PortEnum.COLOR.value,
+                       'port_border_color': PortEnum.BORDER_COLOR.value,
+                       'port_border_size': 1.0,
+                       'port_active_color': PortEnum.ACTIVE_COLOR.value,
+                       'port_active_border_color': PortEnum.ACTIVE_BORDER_COLOR.value,
+                       'port_hover_color': PortEnum.ACTIVE_COLOR.value,
+                       'port_hover_border_color': PortEnum.HOVER_BORDER_COLOR.value                       
+                       }
         self._port_type = None
         self._multi_connection = False
         self._locked = False
@@ -70,14 +75,14 @@ class PortItem(QtWidgets.QGraphicsItem):
         port_rect = QtCore.QRectF(rect_x, rect_y, rect_w, rect_h)
 
         if self._hovered:
-            color = QtGui.QColor(*PortEnum.HOVER_COLOR.value)
-            border_color = QtGui.QColor(*PortEnum.HOVER_BORDER_COLOR.value)
+            color = QtGui.QColor(*self._theme['port_hover_color'])
+            border_color = QtGui.QColor(*self._theme['port_hover_border_color'])
         elif self.connected_pipes:
-            color = QtGui.QColor(*PortEnum.ACTIVE_COLOR.value)
-            border_color = QtGui.QColor(*PortEnum.ACTIVE_BORDER_COLOR.value)
+            color = QtGui.QColor(*self._theme['port_active_color'])
+            border_color = QtGui.QColor(*self._theme['port_active_border_color'])
         else:
-            color = QtGui.QColor(*self.color)
-            border_color = QtGui.QColor(*self.border_color)
+            color = QtGui.QColor(*self._theme['port_color'])
+            border_color = QtGui.QColor(*self._theme['port_border_color'])
 
         pen = QtGui.QPen(border_color, 1.8)
         painter.setPen(pen)
@@ -196,28 +201,28 @@ class PortItem(QtWidgets.QGraphicsItem):
 
     @property
     def color(self):
-        return self._color
+        return self._theme['port_color']
 
     @color.setter
     def color(self, color=(0, 0, 0, 255)):
-        self._color = color
+        self._theme['port_color'] = color
         self.update()
 
     @property
     def border_color(self):
-        return self._border_color
+        return self._theme['port_border_color']
 
     @border_color.setter
     def border_color(self, color=(0, 0, 0, 255)):
-        self._border_color = color
+        self._theme['port_border_color'] = color
 
     @property
     def border_size(self):
-        return self._border_size
+        return self._theme['port_border_size']
 
     @border_size.setter
     def border_size(self, size=2):
-        self._border_size = size
+        self._theme['port_border_size'] = size
 
     @property
     def locked(self):
@@ -276,6 +281,14 @@ class PortItem(QtWidgets.QGraphicsItem):
         port.update()
         self.update()
 
+    def set_theme_item(self, item, value):
+        if item in self._theme:
+            self._theme[item] = value
+
+    def set_theme_items(self, theme_items):
+        for item, value in theme_items.items():
+            if item in self._theme:
+                self._theme[item] = value
 
 class CustomPortItem(PortItem):
     """

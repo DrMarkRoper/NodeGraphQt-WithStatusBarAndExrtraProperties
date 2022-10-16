@@ -136,6 +136,8 @@ class NodeGraph(QtCore.QObject):
 
         self._sub_graphs = {}
 
+        self._default_theme = {}
+        
         self._viewer = (
             kwargs.get('viewer') or NodeViewer(undo_stack=self._undo_stack))
 
@@ -922,6 +924,8 @@ class NodeGraph(QtCore.QObject):
             if pos:
                 node.model.pos = [float(pos[0]), float(pos[1])]
 
+            if getattr(node, '_view.set_default_theme', None):
+                node._view.set_default_theme(self._default_theme)
             node.update()
 
             if push_undo:
@@ -964,6 +968,9 @@ class NodeGraph(QtCore.QObject):
         node.NODE_NAME = self.get_unique_name(node.NODE_NAME)
         node.model._graph_model = self.model
         node.model.name = node.NODE_NAME
+        default_theme_op = getattr(node, "set_default_theme", None)
+        if default_theme_op:
+            node.set_default_theme(self._default_theme)
         node.update()
 
         if push_undo:
@@ -1319,7 +1326,6 @@ class NodeGraph(QtCore.QObject):
                 for prop, val in n_data.get('custom', {}).items():
                     if node.has_property(prop):
                         node.model.set_property(prop, val)
-
                     if (
                         getattr(node.view, 'widgets', None) and
                         prop in node.view.widgets
@@ -1975,6 +1981,35 @@ class NodeGraph(QtCore.QObject):
         # TODO: delete sub graph hmm... not sure if I need this here.
         del sub_graph
 
+    def set_default_theme(self, theme, update_current=True):
+        """
+        Sets a default user defined theme for all new nodes and ports
+        If update_current is true then also update the exisitng nodes and ports
+
+        Args:
+            theme (dict): Dictionary containing theme item: colors, padding, margin, etc.
+        Example:
+            {'node_border_width': 0.8,
+            'node_selected_color': NodeEnum.SELECTED_COLOR.value,
+            'node_selected_border_color': NodeEnum.SELECTED_BORDER_COLOR.value,
+            'node_selected_title_color': NodeEnum.SELECTED_COLOR.value,
+            'node_selected_border_width': 1.2,                        
+            'node_name_background_padding': [3.0, 2.0],
+            'node_base_background_margin': 1.0,
+            'node_name_background_margin': 1.0,
+            'node_name_background_radius': 3.0,
+            'port_color': PortEnum.COLOR.value,
+            'port_border_color': PortEnum.BORDER_COLOR.value,
+            'port_border_size': 1.0,
+            'port_active_color': PortEnum.ACTIVE_COLOR.value,
+            'port_active_border_color': PortEnum.ACTIVE_BORDER_COLOR.value,
+            'port_hover_color': PortEnum.ACTIVE_COLOR.value,
+            'port_hover_border_color': PortEnum.HOVER_BORDER_COLOR.value}
+        """
+        self._default_theme = theme
+        for node_name, node in self._model.nodes.items():
+            if node.type_ != 'nodeGraphQt.nodes.BackdropNode':
+                node._view.set_default_theme(theme, update_current)
 
 class SubGraph(NodeGraph):
     """

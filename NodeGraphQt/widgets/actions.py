@@ -10,11 +10,16 @@ class BaseMenu(QtWidgets.QMenu):
         super(BaseMenu, self).__init__(*args, **kwargs)
         text_color = self.palette().text().color().getRgb()
         selected_color = self.palette().highlight().color().getRgb()
+        if ViewerEnum.BACKGROUND_COLOR_USES_PALETTE.value:
+            window_background = self.palette().window().color().getRgb()
+        else:
+            window_background = ViewerEnum.BACKGROUND_COLOR.value
+        
         style_dict = {
             'QMenu': {
                 'color': 'rgb({0},{1},{2})'.format(*text_color),
                 'background-color': 'rgb({0},{1},{2})'.format(
-                    *ViewerEnum.BACKGROUND_COLOR.value
+                    *window_background
                 ),
                 'border': '1px solid rgba({0},{1},{2},30)'.format(*text_color),
                 'border-radius': '3px',

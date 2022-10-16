@@ -45,6 +45,16 @@ class NodeItem(AbstractNodeItem):
         self._widgets = OrderedDict()
         self._proxy_mode = False
         self._proxy_mode_threshold = 70
+        self._theme = {'node_border_width': 0.8,
+                        'node_selected_color': NodeEnum.SELECTED_COLOR.value,
+                        'node_selected_border_color': NodeEnum.SELECTED_BORDER_COLOR.value,
+                        'node_selected_title_color': NodeEnum.SELECTED_COLOR.value,
+                        'node_selected_border_width': 1.2,                        
+                        'node_name_background_padding': [3.0, 2.0],
+                        'node_base_background_margin': 1.0,
+                        'node_name_background_margin': 1.0,
+                        'node_name_background_radius': 3.0}
+        self._default_theme = {}
         self._properties['progress_bar_background_color'] = NodeEnum.PROGRESS_BAR_BACKGROUND_COLOR.value
         self._properties['progress_bar_color'] = NodeEnum.PROGRESS_BAR_COLOR.value
         self._properties['progress_bar_height'] = NodeEnum.PROGRESS_BAR_HEIGHT.value        
@@ -70,7 +80,7 @@ class NodeItem(AbstractNodeItem):
         painter.setBrush(QtCore.Qt.NoBrush)
 
         # base background.
-        margin = 1.0
+        margin = self._theme['node_base_background_margin']
         rect = self.boundingRect()
         rect = QtCore.QRectF(rect.left() + margin,
                              rect.top() + margin,
@@ -83,21 +93,23 @@ class NodeItem(AbstractNodeItem):
 
         # light overlay on background when selected.
         if self.selected:
-            painter.setBrush(QtGui.QColor(*NodeEnum.SELECTED_COLOR.value))
+            painter.setBrush(QtGui.QColor(*self._theme['node_selected_color']))
             painter.drawRoundedRect(rect, radius, radius)
 
         # node name background.
-        padding = 3.0, 2.0
+        padding = self._theme['node_name_background_padding']
+        margin = self._theme['node_name_background_margin']
+        radius = self._theme['node_name_background_radius']
         text_rect = self._text_item.boundingRect()
         text_rect = QtCore.QRectF(text_rect.x() + padding[0],
                                   rect.y() + padding[1],
                                   rect.width() - padding[0] - margin,
                                   text_rect.height() - (padding[1] * 2))
         if self.selected:
-            painter.setBrush(QtGui.QColor(*NodeEnum.SELECTED_COLOR.value))
+            painter.setBrush(QtGui.QColor(*self._theme['node_selected_title_color']))
         else:
-            painter.setBrush(QtGui.QColor(0, 0, 0, 80))
-        painter.drawRoundedRect(text_rect, 3.0, 3.0)
+            painter.setBrush(QtGui.QColor(0, 0, 0, 80))        
+        painter.drawRoundedRect(text_rect, radius, radius)
 
         # node progress bar
         if self._properties['progress_bar_mode'] != NodeEnum.PROGRESS_BAR_MODE_NONE:
@@ -139,12 +151,10 @@ class NodeItem(AbstractNodeItem):
 
         # node border
         if self.selected:
-            border_width = 1.2
-            border_color = QtGui.QColor(
-                *NodeEnum.SELECTED_BORDER_COLOR.value
-            )
+            border_width = self._theme['node_selected_border_width']
+            border_color = QtGui.QColor(*self._theme['node_selected_border_color'])
         else:
-            border_width = 0.8
+            border_width = self._theme['node_border_width']
             border_color = QtGui.QColor(*self.border_color)
 
         border_rect = QtCore.QRectF(rect.left(), rect.top(),
@@ -682,6 +692,7 @@ class NodeItem(AbstractNodeItem):
             self._output_items[port] = text
         if self.scene():
             self.post_init()
+        port.set_theme_items(self._default_theme)
         return port
 
     def add_input(self, name='input', multi_port=False, display_name=True,
@@ -814,6 +825,27 @@ class NodeItem(AbstractNodeItem):
             if self._widgets.get(name):
                 self._widgets[name].value = value
 
+    def set_theme_item(self, item, value):
+        if item in self._theme:
+            self._theme[item] = value
+        if item == 'node_color':
+            self.color = value
+        elif item == 'node_border_color':
+            self.border_color = value
+
+    def set_theme_items(self, theme_items):
+        for item, value in theme_items.items():
+            self.set_theme_item(item, value)
+
+    def set_default_theme(self, theme, update_current=True):
+        self._default_theme = theme
+        if update_current:
+            self.set_theme_items(theme)
+            for port in self._input_items:
+                port.set_theme_items(theme)
+            for port in self._output_items:
+                port.set_theme_items(theme)
+            
     def set_progress_bar_background_color(self, background_color):
         self._properties['progress_bar_background_color'] = background_color
         if self.scene():
@@ -878,7 +910,6 @@ class NodeItem(AbstractNodeItem):
     def get_progress_bar_block_colors(self):
         return self._properties['progress_bar_block_colors']
 
-
 class NodeItemVertical(NodeItem):
     """
     Vertical Node item.
@@ -925,7 +956,7 @@ class NodeItemVertical(NodeItem):
         # light overlay on background when selected.
         if self.selected:
             painter.setBrush(
-                QtGui.QColor(*NodeEnum.SELECTED_COLOR.value)
+                QtGui.QColor(*self._theme['node_selected_color'])
             )
             painter.drawRoundedRect(rect, radius, radius)
 
@@ -933,7 +964,7 @@ class NodeItemVertical(NodeItem):
         padding = 2.0
         height = 10
         if self.selected:
-            painter.setBrush(QtGui.QColor(*NodeEnum.SELECTED_COLOR.value))
+            painter.setBrush(QtGui.QColor(*self._theme['node_selected_color']))
         else:
             painter.setBrush(QtGui.QColor(0, 0, 0, 80))
         for y in [rect.y() + padding, rect.height() - height - 1]:
@@ -947,7 +978,7 @@ class NodeItemVertical(NodeItem):
         if self.selected:
             border_width = 1.2
             border_color = QtGui.QColor(
-                *NodeEnum.SELECTED_BORDER_COLOR.value
+                *self._theme['node_selected_border_color']
             )
         border_rect = QtCore.QRectF(rect.left(), rect.top(),
                                     rect.width(), rect.height())
