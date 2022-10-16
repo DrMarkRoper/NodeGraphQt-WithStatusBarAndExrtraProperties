@@ -924,7 +924,7 @@ class NodeGraph(QtCore.QObject):
             if pos:
                 node.model.pos = [float(pos[0]), float(pos[1])]
 
-            if node_type != 'Backdrop':
+            if getattr(node, '_view.set_default_theme', None):
                 node._view.set_default_theme(self._default_theme)
             node.update()
 
@@ -1318,8 +1318,9 @@ class NodeGraph(QtCore.QObject):
                 # set custom properties.
                 for prop, val in n_data.get('custom', {}).items():
                     node.model.set_property(prop, val)
-                    if prop in node.view.widgets:
-                        node.view.widgets[prop].set_value(val)
+                    if getattr(node.view, 'widgets', None):
+                        if prop in node.view.widgets:
+                            node.view.widgets[prop].set_value(val)
 
                 nodes[n_id] = node
                 self.add_node(node, n_data.get('pos'))
