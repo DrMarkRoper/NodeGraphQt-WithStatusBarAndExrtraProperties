@@ -924,7 +924,7 @@ class NodeGraph(QtCore.QObject):
             if pos:
                 node.model.pos = [float(pos[0]), float(pos[1])]
 
-            if getattr(node, '_view.set_default_theme', None):
+            if getattr(node._view, 'set_default_theme', None):
                 node._view.set_default_theme(self._default_theme)
             node.update()
 
