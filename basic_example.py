@@ -17,8 +17,12 @@ from examples import group_node
 from examples.custom_nodes import (
     basic_nodes,
     custom_ports_node,
-    widget_nodes,
+    widget_nodes
 )
+
+from examples.custom_nodes.custom_ports_node import draw_square_port
+
+from Qt import QtGui
 
 if __name__ == '__main__':
     # handle SIGINT to make the app terminate on CTRL+C
@@ -92,6 +96,19 @@ if __name__ == '__main__':
     port = n_basic_a.input(0)
     port.connect_to(n_basic_b.output(0))
 
+    port.create_property("TestProp", "this is a string")
+    port.create_property("TestProp2", "this is another string")
+    n_basic_a.create_property(name="test prop", value="this is a test prop", widget_type=3, tab="my tab", extra="extra info")
+    n_basic_a.create_property(name="test prop two", value="this is another test prop", widget_type=3, tab="my tab")
+    n_basic_a.set_port_deletion_allowed(True)
+    graph.create_property("Graph prop 1", "a graph prop value")
+    graph.create_property("Graph prop 2", "another graph prop value")
+
+    n_custom_ports.set_port_deletion_allowed(True)
+    port_custom = n_custom_ports.add_input(name="MY_SPECIAL_PORT", painter_func=draw_square_port)
+    port_custom.create_property("TestProp", "this is a string")
+
+    
     # auto layout nodes.
     graph.auto_layout_nodes()
 

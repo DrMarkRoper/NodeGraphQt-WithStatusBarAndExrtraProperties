@@ -1321,7 +1321,7 @@ class NodeGraph(QtCore.QObject):
                         node.model.set_property(prop, val)
 
                     if (
-                        node.type_ != 'nodeGraphQt.nodes.BackdropNode' and 
+                        getattr(node.view, 'widgets', None) and
                         prop in node.view.widgets
                     ):
                         node.view.widgets[prop].set_value(val)
