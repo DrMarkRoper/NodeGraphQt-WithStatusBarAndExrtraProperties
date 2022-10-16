@@ -9,7 +9,7 @@ from NodeGraphQt.constants import (
     NODE_PROP_QCHECKBOX,
     NODE_PROP_COLORPICKER
 )
-from NodeGraphQt.errors import NodePropertyError
+from NodeGraphQt.errors import NodePropertyError, PortPropertyError, GraphPropertyError
 
 
 class PortModel(object):
@@ -26,10 +26,33 @@ class PortModel(object):
         self.visible = True
         self.locked = False
         self.connected_ports = defaultdict(list)
+        self._custom_prop = {}
+        self.painter_func_name = None
 
     def __repr__(self):
         return '<{}(\'{}\') object at {}>'.format(
             self.__class__.__name__, self.name, hex(id(self)))
+
+    def add_property(self, name, value):
+        """
+        add custom property.
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        if name in self._custom_prop.keys():
+            raise PortPropertyError(
+                '"{}" Port property already exists.'.format(name))
+        self._custom_prop[name] = value
+
+    def set_property(self, name, value):
+        if name in self._custom_prop.keys():
+            self._custom_prop[name] = value
+        else:
+            raise PortPropertyError('No Port property "{}"'.format(name))
+
+    def get_property(self, name):
+        return self._custom_prop.get(name)
 
     @property
     def to_dict(self):
@@ -45,12 +68,19 @@ class PortModel(object):
                     'multi_connection': False,
                     'visible': True,
                     'locked': False,
-                    'connected_ports': {<node_id>: [<port_name>, <port_name>]}
+                    'connected_ports': {<node_id>: [<port_name>, <port_name>]},
+                    'painter_func_name': 'draw_square_port',
+                    'custom': {},
                 }
         """
         props = self.__dict__.copy()
         props.pop('node')
         props['connected_ports'] = dict(props.pop('connected_ports'))
+        custom_props = dict(props.pop('_custom_prop', {}))
+        if custom_props:
+            props['custom'] = custom_props
+        if not props['painter_func_name']:
+            props.pop('painter_func_name')
         return props
 
 
@@ -116,7 +146,7 @@ class NodeModel(object):
             self.__class__.__name__, self.name, self.id)
 
     def add_property(self, name, value, items=None, range=None,
-                     widget_type=NODE_PROP, tab=None):
+                     widget_type=NODE_PROP, tab=None, extra=None):
         """
         add custom property.
 
@@ -127,6 +157,7 @@ class NodeModel(object):
             range (tuple)): min, max values used by NODE_PROP_SLIDER.
             widget_type (int): widget type flag.
             tab (str): widget tab name.
+            extra (object): any additional custom values
         """
         tab = tab or 'Properties'
 
@@ -146,6 +177,8 @@ class NodeModel(object):
                 self._TEMP_property_attrs[name]['items'] = items
             if range:
                 self._TEMP_property_attrs[name]['range'] = range
+            if extra:
+                self._TEMP_property_attrs[name]['extra'] = extra
         else:
             attrs = {self.type_: {name: {
                 'widget_type': widget_type,
@@ -155,6 +188,8 @@ class NodeModel(object):
                 attrs[self.type_][name]['items'] = items
             if range:
                 attrs[self.type_][name]['range'] = range
+            if extra:
+                attrs[self.type_][name]['extra'] = extra
             self._graph_model.set_node_common_properties(attrs)
 
     def set_property(self, name, value):
@@ -184,6 +219,46 @@ class NodeModel(object):
                 return attrs[name].get('tab')
             return
         return model.get_node_common_properties(self.type_)[name]['tab']
+
+    def get_property_items(self, name):
+        model = self._graph_model
+        if model is None:
+            attrs = self._TEMP_property_attrs.get(name)
+            if attrs:
+                return attrs[name].get('items')
+            return None
+        if 'items' in model.get_node_common_properties(self.type_)[name]:
+            return model.get_node_common_properties(self.type_)[name]['items']
+        return None
+
+    def get_property_range(self, name):
+        model = self._graph_model
+        if model is None:
+            attrs = self._TEMP_property_attrs.get(name)
+            if attrs:
+                return attrs[name].get('range')
+            return None
+        if 'range' in model.get_node_common_properties(self.type_)[name]:
+            return model.get_node_common_properties(self.type_)[name]['range']
+        return None
+
+    def get_property_extra(self, name):
+        model = self._graph_model
+        if model is None:
+            attrs = self._TEMP_property_attrs.get(name)
+            if attrs:
+                return attrs[name].get('extra')
+            return None
+        if 'extra' in model.get_node_common_properties(self.type_)[name]:
+            return model.get_node_common_properties(self.type_)[name]['extra']
+        return None
+
+    def set_property_extra(self, name, extra):
+        model = self._graph_model
+        if model is None:
+            self._TEMP_property_attrs[name]['extra'] = extra
+        else:
+            model.get_node_common_properties(self.type_)[name]['extra'] = extra
 
     @property
     def properties(self):
@@ -252,21 +327,17 @@ class NodeModel(object):
         output_ports = []
         for name, model in node_dict.pop('inputs').items():
             if self.port_deletion_allowed:
-                input_ports.append({
-                    'name': name,
-                    'multi_connection': model.multi_connection,
-                    'display_name': model.display_name,
-                })
+                input_port_data = model.to_dict
+                input_port_data.pop('connected_ports', {})
+                input_ports.append(input_port_data)
             connected_ports = model.to_dict['connected_ports']
             if connected_ports:
                 inputs[name] = connected_ports
         for name, model in node_dict.pop('outputs').items():
             if self.port_deletion_allowed:
-                output_ports.append({
-                    'name': name,
-                    'multi_connection': model.multi_connection,
-                    'display_name': model.display_name,
-                })
+                output_port_data = model.to_dict
+                output_port_data.pop('connected_ports', {})
+                output_ports.append(output_port_data)
             connected_ports = model.to_dict['connected_ports']
             if connected_ports:
                 outputs[name] = connected_ports
@@ -285,7 +356,16 @@ class NodeModel(object):
         custom_props = node_dict.pop('_custom_prop', {})
         if custom_props:
             node_dict['custom'] = custom_props
-
+            node_dict['custom_property_data'] = []
+            for prop_name, prop_value in custom_props.items():                
+                custom_prop_data = {'name': prop_name, 
+                                    'value': prop_value, 
+                                    'widget_type': self.get_widget_type(prop_name),
+                                    'tab': self.get_tab_name(prop_name),
+                                    'extra': self.get_property_extra(prop_name),
+                                    'items': self.get_property_items(prop_name),
+                                    'range': self.get_property_range(prop_name)}
+                node_dict['custom_property_data'].append(custom_prop_data)
         exclude = ['_graph_model',
                    '_TEMP_property_attrs',
                    '_TEMP_property_widget_types']
@@ -317,6 +397,7 @@ class NodeGraphModel(object):
         self.session = ''
         self.acyclic = True
         self.pipe_collision = False
+        self._custom_prop = {}
 
     def common_properties(self):
         """
@@ -330,7 +411,8 @@ class NodeGraphModel(object):
                             'widget_type': 0,
                             'tab': 'Properties',
                             'items': ['foo', 'bar', 'test'],
-                            'range': (0, 100)
+                            'range': (0, 100),
+                            'extra': {object}
                             }
                         }
                     }
@@ -349,7 +431,8 @@ class NodeGraphModel(object):
                             'widget_type': 0,
                             'tab': 'Properties',
                             'items': ['foo', 'bar', 'test'],
-                            'range': (0, 100)
+                            'range': (0, 100),
+                            'extra': {object}
                             }
                         }
                     }
@@ -380,6 +463,47 @@ class NodeGraphModel(object):
         """
         return self.__common_node_props.get(node_type)
 
+    def add_property(self, name, value):
+        """
+        add custom property.
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        if name in self._custom_prop.keys():
+            raise GraphPropertyError(
+                '"{}" Graph property already exists.'.format(name))
+        self._custom_prop[name] = value
+
+    def set_property(self, name, value):
+        if name in self._custom_prop.keys():
+            self._custom_prop[name] = value
+        else:
+            raise GraphPropertyError('No Graph property "{}"'.format(name))
+
+    def get_property(self, name):
+        return self._custom_prop.get(name)
+
+    @property
+    def to_dict(self):
+        """
+        serialize model information to a dictionary.
+        Returns:
+            dict: graph dictionary eg.
+                {
+                    'acyclic': True,
+                    'pipe_collision': False,
+                    'custom': {}
+                }
+        """
+        props = self.__dict__.copy()
+        props.pop('nodes')
+        props.pop('session')
+        props.pop('_NodeGraphModel__common_node_props')
+        custom_props = dict(props.pop('_custom_prop', {}))
+        if custom_props:
+            props['custom'] = custom_props
+        return props        
 
 if __name__ == '__main__':
     p = PortModel(None)
