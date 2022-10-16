@@ -118,6 +118,16 @@ class NodeEnum(Enum):
     SELECTED_COLOR = (255, 255, 255, 30)
     #: default node border color when selected.
     SELECTED_BORDER_COLOR = (254, 207, 42, 255)
+    #: progress bar default backgound color.
+    PROGRESS_BAR_BACKGROUND_COLOR = (125, 125, 125, 255)
+    #: progress bar color, default for percent mode.
+    PROGRESS_BAR_COLOR = (0, 125, 0, 255)
+    #: progress bar pixel height.
+    PROGRESS_BAR_HEIGHT = 2
+    #: modes for the progress bar.
+    PROGRESS_BAR_MODE_NONE = 0
+    PROGRESS_BAR_MODE_PERCENT = 1
+    PROGRESS_BAR_MODE_BLOCKS = 2
 
 # ==================================== PORT ====================================
 

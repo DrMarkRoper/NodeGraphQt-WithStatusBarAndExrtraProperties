@@ -16,5 +16,8 @@ class NodeRegistrationError(Exception): pass
 
 class PortError(Exception): pass
 
+class PortPropertyError(Exception): pass
 
 class PortRegistrationError(Exception): pass
+
+class GraphPropertyError(Exception): pass

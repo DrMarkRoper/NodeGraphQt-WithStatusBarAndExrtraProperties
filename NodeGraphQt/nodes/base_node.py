@@ -18,6 +18,7 @@ from NodeGraphQt.widgets.node_widgets import (NodeBaseWidget,
                                               NodeComboBox,
                                               NodeLineEdit,
                                               NodeCheckBox)
+from NodeGraphQt.qgraphics import node_port_custom_painter_funcs
 
 
 class BaseNode(NodeObject):
@@ -266,6 +267,8 @@ class BaseNode(NodeObject):
         port.model.display_name = display_name
         port.model.multi_connection = multi_input
         port.model.locked = locked
+        if painter_func and callable(painter_func):
+            port.model.painter_func_name = painter_func.__name__
         self._inputs.append(port)
         self.model.inputs[port.name()] = port.model
         return port
@@ -308,6 +311,8 @@ class BaseNode(NodeObject):
         port.model.display_name = display_name
         port.model.multi_connection = multi_output
         port.model.locked = locked
+        if painter_func and callable(painter_func):
+            port.model.painter_func_name = painter_func.__name__
         self._outputs.append(port)
         self.model.outputs[port.name()] = port.model
         return port
@@ -450,14 +455,20 @@ class BaseNode(NodeObject):
                             'name': 'input',
                             'multi_connection': True,
                             'display_name': 'Input',
-                            'locked': False
+                            'locked': False,
+                            'visible': True,
+                            'painter_func_name': 'draw_square_port',
+                            'custom': {object}
                         }],
                     'output_ports':
                         [{
                             'name': 'output',
                             'multi_connection': True,
                             'display_name': 'Output',
-                            'locked': False
+                            'locked': False,
+                            'visible': True,
+                            'painter_func_name': 'draw_square_port',
+                            'custom': {object}
                         }]
                 }
 
@@ -480,16 +491,41 @@ class BaseNode(NodeObject):
         self._model.outputs = {}
         self._model.inputs = {}
 
-        [self.add_input(name=port['name'],
+        for port in port_data['input_ports']:
+            custom_painter = None
+            if 'painter_func_name' in port.keys():
+                try:
+                    custom_painter = getattr(node_port_custom_painter_funcs, port['painter_func_name'])
+                except:
+                    custom_painter = None
+                    print("Custom painter function not found: " + port['painter_func_name'])
+            new_port = self.add_input(name=port['name'],
                         multi_input=port['multi_connection'],
                         display_name=port['display_name'],
-                        locked=port.get('locked') or False)
-         for port in port_data['input_ports']]
-        [self.add_output(name=port['name'],
-                         multi_output=port['multi_connection'],
-                         display_name=port['display_name'],
-                         locked=port.get('locked') or False)
-         for port in port_data['output_ports']]
+                        locked=port.get('locked') or False,
+                        painter_func = custom_painter)
+            if 'custom' in port.keys():
+                for port_name, port_value in port['custom'].items():
+                    new_port.create_property(port_name, port_value)
+            if 'painter_func_name' in port.keys():
+                new_port.model.painter_func_name = port['painter_func_name']
+        for port in port_data['output_ports']:
+            custom_painter = None
+            if 'painter_func_name' in port.keys():
+                try:
+                    custom_painter = getattr(node_port_custom_painter_funcs, port['painter_func_name'])
+                except:
+                    custom_painter = None
+                    print("Custom painter function not found: " + port['painter_func_name'])
+            new_port = self.add_output(name=port['name'],
+                        multi_output=port['multi_connection'],
+                        display_name=port['display_name'],
+                        locked=port.get('locked') or False,
+                        painter_func = custom_painter)
+            if 'custom' in port.keys():
+                for port_name, port_value in port['custom'].items():
+                    new_port.create_property(port_name, port_value)
+
         self.draw()
 
     def inputs(self):

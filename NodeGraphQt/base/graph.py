@@ -1225,6 +1225,7 @@ class NodeGraph(QtCore.QObject):
             self._undo_stack.push(NodeRemovedCmd(self, n))
         self._undo_stack.clear()
         self._model.session = ''
+        self._model._custom_prop = {}
 
     def _serialize(self, nodes):
         """
@@ -1243,6 +1244,9 @@ class NodeGraph(QtCore.QObject):
         # serialize graph session.
         serial_data['graph']['acyclic'] = self.acyclic()
         serial_data['graph']['pipe_collision'] = self.pipe_collision()
+        graph_props = self.properties()
+        if graph_props:
+            serial_data['graph']['custom'] = graph_props
 
         # serialize nodes.
         for n in nodes:
@@ -1303,6 +1307,9 @@ class NodeGraph(QtCore.QObject):
                 self.set_acyclic(attr_value)
             elif attr_name == 'pipe_collision':
                 self.set_pipe_collision(attr_value)
+            elif attr_name == 'custom':
+                for prop_name, prop_value in attr_value.items():
+                    self.create_property(prop_name, prop_value)
 
         # build the nodes.
         nodes = {}
@@ -1317,10 +1324,25 @@ class NodeGraph(QtCore.QObject):
                         node.model.set_property(prop, n_data[prop])
                 # set custom properties.
                 for prop, val in n_data.get('custom', {}).items():
-                    node.model.set_property(prop, val)
-                    if getattr(node.view, 'widgets', None):
-                        if prop in node.view.widgets:
-                            node.view.widgets[prop].set_value(val)
+                    if node.has_property(prop):
+                        node.model.set_property(prop, val)
+                    if (
+                        getattr(node.view, 'widgets', None) and
+                        prop in node.view.widgets
+                    ):
+                        node.view.widgets[prop].set_value(val)
+
+                # create custom products which were originally added after node creation
+                if n_data.get('custom_property_data'):
+                    for prop_data in n_data['custom_property_data']:
+                        if not node.has_property(prop):
+                            node.create_property(name=prop_data['name'], 
+                                                value=prop_data['value'], 
+                                                widget_type=prop_data.get('widget_type'),
+                                                tab=prop_data.get('tab'),
+                                                items=prop_data.get('items'),
+                                                range=prop_data.get('range'),
+                                                extra=prop_data.get('extra'))
 
                 nodes[n_id] = node
                 self.add_node(node, n_data.get('pos'))
@@ -1579,6 +1601,58 @@ class NodeGraph(QtCore.QObject):
         Set the viewport to use QOpenGLWidget widget to draw the graph.
         """
         self._viewer.use_OpenGL()
+
+    def create_property(self, name, value):
+        """
+        Creates a custom property to the graph.
+        Args:
+            name (str): name of the property.
+            value (object): data.
+        """
+        self.model.add_property(name, value)
+
+    def properties(self):
+        """
+        Returns all the graph properties.
+        Returns:
+            dict: a dictionary of node properties.
+        """
+        props = self.model.to_dict.copy()
+        return props.get('custom', None)
+
+    def get_property(self, name):
+        """
+        Return the graph property.
+        Args:
+            name (str): name of the property.
+        Returns:
+            object: property data.
+        """
+        return self.model.get_property(name)
+
+    def set_property(self, name, value):
+        """
+        Set the value on the graph property.
+        Args:
+            name (str): name of the property.
+            value (object): property data (python built in types).
+        """
+
+        # prevent signals from causing a infinite loop.
+        if self.get_property(name) == value:
+            return
+        self.model.set_property(name, value)
+
+    def has_property(self, name):
+        """
+        Check if port property exists.
+        Args:
+            name (str): name of the node.
+        Returns:
+            bool: true if property name exists in the Node.
+        """
+        return name in self.model.custom_properties.keys()
+
 
     # auto layout node functions.
     # --------------------------------------------------------------------------
