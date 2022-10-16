@@ -1244,6 +1244,7 @@ class NodeGraph(QtCore.QObject):
         # serialize graph session.
         serial_data['graph']['acyclic'] = self.acyclic()
         serial_data['graph']['pipe_collision'] = self.pipe_collision()
+        serial_data['graph']['default_theme'] = self._default_theme
         graph_props = self.properties()
         if graph_props:
             serial_data['graph']['custom'] = graph_props
@@ -1254,6 +1255,10 @@ class NodeGraph(QtCore.QObject):
             n.update_model()
 
             node_dict = n.model.to_dict
+            # add node theme overrid values
+            if getattr(n._view, "get_theme_specifics", None):
+                for key, value in node_dict.items():
+                    node_dict[key]['theme_overrides'] =  n._view.get_theme_specifics(self._default_theme)
             nodes_data.update(node_dict)
 
         for n_id, n_data in nodes_data.items():
@@ -1307,6 +1312,8 @@ class NodeGraph(QtCore.QObject):
                 self.set_acyclic(attr_value)
             elif attr_name == 'pipe_collision':
                 self.set_pipe_collision(attr_value)
+            elif attr_name == 'default_theme':
+                self.set_default_theme(attr_value)
             elif attr_name == 'custom':
                 for prop_name, prop_value in attr_value.items():
                     self.create_property(prop_name, prop_value)
@@ -1343,7 +1350,12 @@ class NodeGraph(QtCore.QObject):
                                                 items=prop_data.get('items'),
                                                 range=prop_data.get('range'),
                                                 extra=prop_data.get('extra'))
-
+                # Set node theme (Use graph defaults, followed by node specific values)
+                if getattr(node._view, "set_default_theme", None):
+                    node._view.set_default_theme(self._default_theme, True)
+                if n_data.get('theme_overrides'):
+                    node._view.set_theme_items(n_data['theme_overrides'])
+                
                 nodes[n_id] = node
                 self.add_node(node, n_data.get('pos'))
 
@@ -2008,7 +2020,7 @@ class NodeGraph(QtCore.QObject):
         """
         self._default_theme = theme
         for node_name, node in self._model.nodes.items():
-            if node.type_ != 'nodeGraphQt.nodes.BackdropNode':
+            if getattr(node._view, "set_default_theme", None):
                 node._view.set_default_theme(theme, update_current)
 
 class SubGraph(NodeGraph):

@@ -127,6 +127,15 @@ if __name__ == '__main__':
     port_custom.create_property("TestProp", "this is a string")
 
     
+    #n_basic_b.view.set_progress_bar_percent(color=(255,0,0,255))
+    #n_basic_b.view.set_progress_bar_percent()
+
+    n_basic_b.view.set_progress_bar_block_colors(block_colors=[(255,0,0,255),(0,255,0,255),(0, 0, 255, 255)], block_count=10)
+    #n_basic_b.view.set_progress_bar_height(1)
+
+
+    n_basic_b._view.set_default_theme({'node_selected_color': (0, 255, 0, 30),})
+
     # auto layout nodes.
     graph.auto_layout_nodes()
 

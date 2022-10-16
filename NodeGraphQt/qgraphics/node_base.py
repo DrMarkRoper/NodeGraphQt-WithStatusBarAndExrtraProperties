@@ -53,15 +53,16 @@ class NodeItem(AbstractNodeItem):
                         'node_name_background_padding': [3.0, 2.0],
                         'node_base_background_margin': 1.0,
                         'node_name_background_margin': 1.0,
-                        'node_name_background_radius': 3.0}
+                        'node_name_background_radius': 3.0,
+                        'node_progress_bar_background_color': NodeEnum.PROGRESS_BAR_BACKGROUND_COLOR.value,
+                        'node_progress_bar_color': NodeEnum.PROGRESS_BAR_COLOR.value,
+                        'node_progress_bar_height': NodeEnum.PROGRESS_BAR_HEIGHT.value,
+                        'node_progress_bar_mode': NodeEnum.PROGRESS_BAR_MODE_NONE.value,
+                        'node_progress_bar_percent': 100,
+                        'node_progress_bar_block_count': 1,
+                        'node_progress_bar_block_colors': []
+                        }
         self._default_theme = {}
-        self._properties['progress_bar_background_color'] = NodeEnum.PROGRESS_BAR_BACKGROUND_COLOR.value
-        self._properties['progress_bar_color'] = NodeEnum.PROGRESS_BAR_COLOR.value
-        self._properties['progress_bar_height'] = NodeEnum.PROGRESS_BAR_HEIGHT.value        
-        self._properties['progress_bar_mode'] = NodeEnum.PROGRESS_BAR_MODE_NONE
-        self._properties['progress_bar_percent'] = 100
-        self._properties['progress_bar_block_count'] = 1
-        self._properties['progress_bar_block_colors'] = []
 
     def paint(self, painter, option, widget):
         """
@@ -112,28 +113,28 @@ class NodeItem(AbstractNodeItem):
         painter.drawRoundedRect(text_rect, radius, radius)
 
         # node progress bar
-        if self._properties['progress_bar_mode'] != NodeEnum.PROGRESS_BAR_MODE_NONE:
+        if self._theme['node_progress_bar_mode'] != NodeEnum.PROGRESS_BAR_MODE_NONE.value:
             # Draw the background bar, everything else will overwrite this as necessary
-            progress_bar_height = self._properties['progress_bar_height']       
+            progress_bar_height = self._theme['node_progress_bar_height']       
             status_rect = QtCore.QRectF(rect.x() + margin,
                                       text_rect.y() + text_rect.height(),
                                       rect.width() - (margin * 2),
                                       progress_bar_height)
-            painter.setBrush(QtGui.QColor(*self._properties['progress_bar_background_color']))
+            painter.setBrush(QtGui.QColor(*self._theme['node_progress_bar_background_color']))
             painter.drawRect(status_rect)
 
-            if self._properties['progress_bar_mode'] == NodeEnum.PROGRESS_BAR_MODE_PERCENT:
+            if self._theme['node_progress_bar_mode'] == NodeEnum.PROGRESS_BAR_MODE_PERCENT.value:
                 status_rect = QtCore.QRectF(rect.x() + margin,
                                           text_rect.y() + text_rect.height(),
-                                          int(rect.width() / 100 * self._properties['progress_bar_percent']) - (margin * 2),
+                                          int(rect.width() / 100 * self._theme['node_progress_bar_percent']) - (margin * 2),
                                           progress_bar_height)
-                painter.setBrush(QtGui.QColor(*self._properties['progress_bar_color']))
+                painter.setBrush(QtGui.QColor(*self._theme['node_progress_bar_color']))
                 painter.drawRect(status_rect)
 
-            elif self._properties['progress_bar_mode'] == NodeEnum.PROGRESS_BAR_MODE_BLOCKS:
-                width_per_block = int((rect.width() - (margin * 2)) / max(self._properties['progress_bar_block_count'], len(self._properties['progress_bar_block_colors'])))
+            elif self._theme['node_progress_bar_mode'] == NodeEnum.PROGRESS_BAR_MODE_BLOCKS.value:
+                width_per_block = int((rect.width() - (margin * 2)) / max(self._theme['node_progress_bar_block_count'], len(self._theme['node_progress_bar_block_colors'])))
                 start_x = 0
-                for block_item in self._properties['progress_bar_block_colors']:
+                for block_item in self._theme['node_progress_bar_block_colors']:
                     status_rect = QtCore.QRectF(margin + start_x,
                                               text_rect.y() + text_rect.height(),
                                               width_per_block,
@@ -845,70 +846,79 @@ class NodeItem(AbstractNodeItem):
                 port.set_theme_items(theme)
             for port in self._output_items:
                 port.set_theme_items(theme)
-            
+
+    def get_theme_specifics(self, compare_theme):
+        theme_specifics = {}
+        for key, value in self._theme.items():
+            if key not in compare_theme:
+                theme_specifics[key] = value
+            elif compare_theme[key] != value:
+                theme_specifics[key] = value
+        return theme_specifics
+
     def set_progress_bar_background_color(self, background_color):
-        self._properties['progress_bar_background_color'] = background_color
+        self._theme['node_progress_bar_background_color'] = background_color
         if self.scene():
             self.post_init()
         self.update()
 
     def get_progress_bar_background_color(self):
-        return self._properties['progress_bar_background_color']
+        return self._theme['node_progress_bar_background_color']
 
     def set_progress_bar_color(self, color):
-        self._properties['progress_bar_color'] = color
+        self._theme['node_progress_bar_color'] = color
         if self.scene():
             self.post_init()
         self.update()
 
     def get_progress_bar_height(self):
-        return self._properties['progress_bar_height']
+        return self._theme['node_progress_bar_height']
 
     def set_progress_bar_height(self, height):
-        self._properties['progress_bar_height'] = height
+        self._theme['node_progress_bar_height'] = height
         if self.scene():
             self.post_init()
         self.update()
 
     def get_progress_bar_height(self):
-        return self._properties['progress_bar_height']
+        return self._theme['node_progress_bar_height']
 
     def set_progress_bar_mode(self, mode):
-        self._properties['progress_bar_mode'] = mode
+        self._theme['node_progress_bar_mode'] = mode
         if self.scene():
             self.post_init()
         self.update()
 
     def get_progress_bar_mode(self):
-        return self._properties['progress_bar_mode']
+        return self._theme['node_progress_bar_mode']
 
     def set_progress_bar_percent(self, percent=100, background_color=None, color=None):
-        self._properties['progress_bar_mode'] = NodeEnum.PROGRESS_BAR_MODE_PERCENT
-        self._properties['progress_bar_percent'] = percent
+        self._theme['node_progress_bar_mode'] = NodeEnum.PROGRESS_BAR_MODE_PERCENT.value
+        self._theme['node_progress_bar_percent'] = percent
         if background_color:
-            self._properties['progress_bar_background_color'] = background_color
+            self._theme['node_progress_bar_background_color'] = background_color
         if color:
-            self._properties['progress_bar_color'] = color
+            self._theme['node_progress_bar_color'] = color
 
     def get_progress_bar_percent(self):
-        return self._properties['progress_bar_percent']
+        return self._theme['node_progress_bar_percent']
 
     def set_progress_bar_block_count(self, block_count):
-        self._properties['progress_bar_block_count'] = block_count
+        self._theme['node_progress_bar_block_count'] = block_count
         if self.scene():
             self.post_init()
         self.update()
 
     def set_progress_bar_block_colors(self, block_colors=[], block_count=None, background_color=None):
-        self._properties['progress_bar_mode'] = NodeEnum.PROGRESS_BAR_MODE_BLOCKS
-        self._properties['progress_bar_block_colors'] = block_colors
+        self._theme['node_progress_bar_mode'] = NodeEnum.PROGRESS_BAR_MODE_BLOCKS.value
+        self._theme['node_progress_bar_block_colors'] = block_colors
         if block_count:
-            self._properties['progress_bar_block_count'] = block_count
+            self._theme['node_progress_bar_block_count'] = block_count
         if background_color:
-            self._properties['progress_bar_background_color'] = background_color
+            self._theme['node_progress_bar_background_color'] = background_color
 
     def get_progress_bar_block_colors(self):
-        return self._properties['progress_bar_block_colors']
+        return self._theme['node_progress_bar_block_colors']
 
 class NodeItemVertical(NodeItem):
     """
