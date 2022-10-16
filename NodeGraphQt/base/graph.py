@@ -17,10 +17,9 @@ from NodeGraphQt.base.model import NodeGraphModel
 from NodeGraphQt.base.node import NodeObject
 from NodeGraphQt.base.port import Port
 from NodeGraphQt.constants import (
-    URI_SCHEME,
-    URN_SCHEME,
-    LayoutDirectionEnum,
+    NODE_LAYOUT_DIRECTION, NODE_LAYOUT_HORIZONTAL, NODE_LAYOUT_VERTICAL,
     PipeLayoutEnum,
+    URI_SCHEME, URN_SCHEME,
     PortTypeEnum,
     ViewerEnum
 )
@@ -42,14 +41,6 @@ class NodeGraph(QtCore.QObject):
 
     .. image:: _images/graph.png
         :width: 60%
-    """
-
-    nodes_registered = QtCore.Signal(list)
-    """
-    Signal triggered when a node is registered into the node graph.
-
-    :parameters: list[:class:`NodeGraphQt.NodeObject`]
-    :emits: registered nodes
     """
 
     node_created = QtCore.Signal(NodeObject)
@@ -134,15 +125,6 @@ class NodeGraph(QtCore.QObject):
         self.setObjectName('NodeGraph')
         self._model = (
             kwargs.get('model') or NodeGraphModel())
-
-        layout_direction = kwargs.get('layout_direction')
-        if layout_direction:
-            if layout_direction not in [e.value for e in LayoutDirectionEnum]:
-                layout_direction = LayoutDirectionEnum.HORIZONTAL.value
-            self._model.layout_direction = layout_direction
-        else:
-            layout_direction = self._model.layout_direction
-
         self._node_factory = (
             kwargs.get('node_factory') or NodeFactory())
 
@@ -156,7 +138,6 @@ class NodeGraph(QtCore.QObject):
 
         self._viewer = (
             kwargs.get('viewer') or NodeViewer(undo_stack=self._undo_stack))
-        self._viewer.set_layout_direction(layout_direction)
 
         self._build_context_menu()
         self._register_builtin_nodes()
@@ -805,55 +786,6 @@ class NodeGraph(QtCore.QObject):
         style = style if 0 <= style <= pipe_max else PipeLayoutEnum.CURVED.value
         self._viewer.set_pipe_layout(style)
 
-    def layout_direction(self):
-        """
-        Return the current node graph layout direction.
-
-        `Implemented in` ``v0.3.0``
-
-        See Also:
-            :meth:`NodeGraph.set_layout_direction`
-
-        Returns:
-            int: layout direction.
-        """
-        return self.model.layout_direction
-
-    def set_layout_direction(self, direction):
-        """
-        Sets the node graph layout direction to horizontal or vertical.
-        This function will also override the layout direction on all
-        nodes in the current node graph.
-
-        `Implemented in` ``v0.3.0``
-
-        See Also:
-            :meth:`NodeGraph.layout_direction`,
-            :meth:`NodeObject.set_layout_direction`
-
-        Note:
-            Node Graph Layout Types:
-
-            * :attr:`NodeGraphQt.constants.LayoutDirectionEnum.HORIZONTAL`
-            * :attr:`NodeGraphQt.constants.LayoutDirectionEnum.VERTICAL`
-
-            .. image:: _images/layout_direction_switch.gif
-                :width: 300px
-
-        Warnings:
-            This function does not register to the undo stack.
-
-        Args:
-            direction (int): layout direction.
-        """
-        direction_types = [e.value for e in LayoutDirectionEnum]
-        if direction not in direction_types:
-            direction = LayoutDirectionEnum.HORIZONTAL.value
-        self._model.layout_direction = direction
-        for node in self.all_nodes():
-            node.set_layout_direction(direction)
-        self._viewer.set_layout_direction(direction)
-
     def fit_to_selection(self):
         """
         Sets the zoom level to fit selected nodes.
@@ -921,12 +853,11 @@ class NodeGraph(QtCore.QObject):
         Register the node to the :meth:`NodeGraph.node_factory`
 
         Args:
-            node (NodeGraphQt.NodeObject): node object.
+            node (_NodeGraphQt.NodeObject): node object.
             alias (str): custom alias name for the node type.
         """
         self._node_factory.register_node(node, alias)
         self._viewer.rebuild_tab_search()
-        self.nodes_registered.emit([node])
 
     def register_nodes(self, nodes):
         """
@@ -937,7 +868,6 @@ class NodeGraph(QtCore.QObject):
         """
         [self._node_factory.register_node(n) for n in nodes]
         self._viewer.rebuild_tab_search()
-        self.nodes_registered.emit(nodes)
 
     def create_node(self, node_type, name=None, selected=True, color=None,
                     text_color=None, pos=None, push_undo=True):
@@ -992,9 +922,6 @@ class NodeGraph(QtCore.QObject):
             if pos:
                 node.model.pos = [float(pos[0]), float(pos[1])]
 
-            # initial node direction layout.
-            node.model.layout_direction = self.layout_direction()
-
             node.update()
 
             if push_undo:
@@ -1037,11 +964,6 @@ class NodeGraph(QtCore.QObject):
         node.NODE_NAME = self.get_unique_name(node.NODE_NAME)
         node.model._graph_model = self.model
         node.model.name = node.NODE_NAME
-
-        # initial node direction layout.
-        node.model.layout_direction = self.layout_direction()
-
-        # update method must be called before it's been added to the viewer.
         node.update()
 
         if push_undo:
@@ -1389,9 +1311,8 @@ class NodeGraph(QtCore.QObject):
                 # set custom properties.
                 for prop, val in n_data.get('custom', {}).items():
                     node.model.set_property(prop, val)
-                    if isinstance(node, BaseNode):
-                        if prop in node.view.widgets:
-                            node.view.widgets[prop].set_value(val)
+                    if prop in node.view.widgets:
+                        node.view.widgets[prop].set_value(val)
 
                 nodes[n_id] = node
                 self.add_node(node, n_data.get('pos'))
@@ -1751,9 +1672,7 @@ class NodeGraph(QtCore.QObject):
             else:
                 rank_map[rank] = [node]
 
-        node_layout_direction = self._viewer.get_layout_direction()
-
-        if node_layout_direction is LayoutDirectionEnum.HORIZONTAL.value:
+        if NODE_LAYOUT_DIRECTION is NODE_LAYOUT_HORIZONTAL:
             current_x = 0
             node_height = 120
             for rank in sorted(range(len(rank_map)), reverse=not down_stream):
@@ -1768,7 +1687,7 @@ class NodeGraph(QtCore.QObject):
                     current_y += dy * 0.5 + 10
 
                 current_x += max_width * 0.5 + 100
-        elif node_layout_direction is LayoutDirectionEnum.VERTICAL.value:
+        elif NODE_LAYOUT_DIRECTION is NODE_LAYOUT_VERTICAL:
             current_y = 0
             node_width = 250
             for rank in sorted(range(len(rank_map)), reverse=not down_stream):
@@ -1942,11 +1861,7 @@ class NodeGraph(QtCore.QObject):
 
         # build new sub graph.
         node_factory = copy.deepcopy(self.node_factory)
-        layout_direction = self.layout_direction()
-        sub_graph = SubGraph(self,
-                             node=node,
-                             node_factory=node_factory,
-                             layout_direction=layout_direction)
+        sub_graph = SubGraph(self, node=node, node_factory=node_factory)
 
         # populate the sub graph.
         session = node.get_sub_graph_session()
@@ -1998,17 +1913,14 @@ class SubGraph(NodeGraph):
     -
     """
 
-    def __init__(self, parent=None, node=None, node_factory=None, **kwargs):
+    def __init__(self, parent=None, node=None, node_factory=None):
         """
         Args:
             parent (object): object parent.
             node (GroupNode): group node related to this sub graph.
             node_factory (NodeFactory): override node factory.
-            **kwargs (dict): additional kwargs.
         """
-        super(SubGraph, self).__init__(
-            parent, node_factory=node_factory, **kwargs
-        )
+        super(SubGraph, self).__init__(parent, node_factory=node_factory)
 
         # sub graph attributes.
         self._node = node
@@ -2041,8 +1953,6 @@ class SubGraph(NodeGraph):
         Returns:
              tuple(dict, dict): input nodes, output nodes.
         """
-        node_layout_direction = self._viewer.get_layout_direction()
-
         # build the parent input port nodes.
         input_nodes = {n.name(): n for n in
                        self.get_nodes_by_type(PortInputNode.type_)}
@@ -2055,9 +1965,9 @@ class SubGraph(NodeGraph):
                 input_nodes[port.name()] = input_node
                 self.add_node(input_node, selected=False, push_undo=False)
                 x, y = input_node.pos()
-                if node_layout_direction is LayoutDirectionEnum.HORIZONTAL.value:
+                if NODE_LAYOUT_DIRECTION is NODE_LAYOUT_HORIZONTAL:
                     x -= 100
-                elif node_layout_direction is LayoutDirectionEnum.VERTICAL.value:
+                elif NODE_LAYOUT_DIRECTION is NODE_LAYOUT_VERTICAL:
                     y -= 100
                 input_node.set_property('pos', [x, y], push_undo=False)
 
@@ -2073,9 +1983,9 @@ class SubGraph(NodeGraph):
                 output_nodes[port.name()] = output_node
                 self.add_node(output_node, selected=False, push_undo=False)
                 x, y = output_node.pos()
-                if node_layout_direction is LayoutDirectionEnum.HORIZONTAL.value:
+                if NODE_LAYOUT_DIRECTION is NODE_LAYOUT_HORIZONTAL:
                     x += 100
-                elif node_layout_direction is LayoutDirectionEnum.VERTICAL.value:
+                elif NODE_LAYOUT_DIRECTION is NODE_LAYOUT_VERTICAL:
                     y += 100
                 output_node.set_property('pos', [x, y], push_undo=False)
 
@@ -2372,10 +2282,7 @@ class SubGraph(NodeGraph):
 
         # build new sub graph.
         node_factory = copy.deepcopy(self.node_factory)
-        sub_graph = SubGraph(self,
-                             node=node,
-                             node_factory=node_factory,
-                             layout_direction=self.layout_direction())
+        sub_graph = SubGraph(self, node=node, node_factory=node_factory)
 
         # populate the sub graph.
         serialized_session = node.get_sub_graph_session()

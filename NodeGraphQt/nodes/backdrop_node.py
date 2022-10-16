@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from NodeGraphQt.base.node import NodeObject
-from NodeGraphQt.constants import NODE_PROP_QTEXTEDIT
+from NodeGraphQt.constants import (NODE_PROP_QTEXTEDIT,
+                                   NODE_LAYOUT_HORIZONTAL,
+                                   NODE_LAYOUT_VERTICAL)
 from NodeGraphQt.qgraphics.node_backdrop import BackdropNodeItem
 
 
@@ -20,7 +22,11 @@ class BackdropNode(NodeObject):
     NODE_NAME = 'Backdrop'
 
     def __init__(self, qgraphics_views=None):
-        super(BackdropNode, self).__init__(qgraphics_views or BackdropNodeItem)
+        qgraphics_views = qgraphics_views or {
+            NODE_LAYOUT_HORIZONTAL: BackdropNodeItem,
+            NODE_LAYOUT_VERTICAL: BackdropNodeItem
+        }
+        super(BackdropNode, self).__init__(qgraphics_views)
         # override base default color.
         self.model.color = (5, 129, 138, 255)
         self.create_property('backdrop_text', '',

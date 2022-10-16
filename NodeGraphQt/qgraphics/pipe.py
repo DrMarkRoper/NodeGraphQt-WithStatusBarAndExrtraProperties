@@ -4,13 +4,11 @@ import math
 from Qt import QtCore, QtGui, QtWidgets
 
 from NodeGraphQt.constants import (
-    LayoutDirectionEnum,
-    PipeEnum,
-    PipeLayoutEnum,
-    PortTypeEnum,
+    PipeEnum, PipeLayoutEnum, PortTypeEnum, Z_VAL_PIPE,
+    Z_VAL_NODE_WIDGET,
     ITEM_CACHE_MODE,
-    Z_VAL_PIPE,
-    Z_VAL_NODE_WIDGET
+    NODE_LAYOUT_VERTICAL, NODE_LAYOUT_HORIZONTAL,
+    NODE_LAYOUT_DIRECTION
 )
 from NodeGraphQt.qgraphics.port import PortItem
 
@@ -263,11 +261,11 @@ class PipeItem(QtWidgets.QGraphicsPathItem):
             path.lineTo(pos2)
             self.setPath(path)
             return
-
-        if self.viewer_layout_direction() is LayoutDirectionEnum.VERTICAL.value:
-            self.__draw_path_vertical(start_port, pos1, pos2, path)
-        elif self.viewer_layout_direction() is LayoutDirectionEnum.HORIZONTAL.value:
-            self.__draw_path_horizontal(start_port, pos1, pos2, path)
+        else:
+            if NODE_LAYOUT_DIRECTION is NODE_LAYOUT_VERTICAL:
+                self.__draw_path_vertical(start_port, pos1, pos2, path)
+            elif NODE_LAYOUT_DIRECTION is NODE_LAYOUT_HORIZONTAL:
+                self.__draw_path_horizontal(start_port, pos1, pos2, path)
 
     def reset_path(self):
         path = QtGui.QPainterPath(QtCore.QPointF(0.0, 0.0))
@@ -294,11 +292,6 @@ class PipeItem(QtWidgets.QGraphicsPathItem):
         if self.scene():
             viewer = self.scene().viewer()
             return viewer.get_pipe_layout()
-
-    def viewer_layout_direction(self):
-        if self.scene():
-            viewer = self.scene().viewer()
-            return viewer.get_layout_direction()
 
     def activate(self):
         self._active = True
