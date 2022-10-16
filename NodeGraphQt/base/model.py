@@ -3,7 +3,6 @@ import json
 from collections import defaultdict
 
 from NodeGraphQt.constants import (
-    LayoutDirectionEnum,
     NODE_PROP,
     NODE_PROP_QLABEL,
     NODE_PROP_QLINEEDIT,
@@ -74,7 +73,6 @@ class NodeModel(object):
         self.width = 100.0
         self.height = 80.0
         self.pos = [0.0, 0.0]
-        self.layout_direction = LayoutDirectionEnum.HORIZONTAL.value
 
         # BaseNode attrs.
         self.inputs = {}
@@ -109,7 +107,6 @@ class NodeModel(object):
             'width': NODE_PROP,
             'height': NODE_PROP,
             'pos': NODE_PROP,
-            'layout_direction': NODE_PROP,
             'inputs': NODE_PROP,
             'outputs': NODE_PROP,
         }
@@ -233,7 +230,6 @@ class NodeModel(object):
                     'width': 0.0,
                     'height: 0.0,
                     'pos': (0.0, 0.0),
-                    'layout_direction': 0,
                     'custom': {},
                     'inputs': {
                         <port_name>: {<node_id>: [<port_name>, <port_name>]}
@@ -321,7 +317,6 @@ class NodeGraphModel(object):
         self.session = ''
         self.acyclic = True
         self.pipe_collision = False
-        self.layout_direction = LayoutDirectionEnum.HORIZONTAL.value
 
     def common_properties(self):
         """

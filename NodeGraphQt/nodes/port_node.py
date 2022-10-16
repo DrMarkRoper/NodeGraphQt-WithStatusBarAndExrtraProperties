@@ -1,8 +1,13 @@
 #!/usr/bin/python
+from NodeGraphQt.constants import (NODE_LAYOUT_VERTICAL,
+                                   NODE_LAYOUT_HORIZONTAL)
+
 from NodeGraphQt.errors import PortRegistrationError
 from NodeGraphQt.nodes.base_node import BaseNode
-from NodeGraphQt.qgraphics.node_port_in import PortInputNodeItem
-from NodeGraphQt.qgraphics.node_port_out import PortOutputNodeItem
+from NodeGraphQt.qgraphics.node_port_in import (PortInputNodeItem,
+                                                PortInputNodeVerticalItem)
+from NodeGraphQt.qgraphics.node_port_out import (PortOutputNodeItem,
+                                                 PortOutputNodeVerticalItem)
 
 
 class PortInputNode(BaseNode):
@@ -21,8 +26,12 @@ class PortInputNode(BaseNode):
 
     NODE_NAME = 'InputPort'
 
-    def __init__(self, qgraphics_item=None, parent_port=None):
-        super(PortInputNode, self).__init__(qgraphics_item or PortInputNodeItem)
+    def __init__(self, qgraphics_views=None, parent_port=None):
+        qgraphics_views = qgraphics_views or {
+            NODE_LAYOUT_HORIZONTAL: PortInputNodeItem,
+            NODE_LAYOUT_VERTICAL: PortInputNodeVerticalItem
+        }
+        super(PortInputNode, self).__init__(qgraphics_views)
         self._parent_port = parent_port
 
     @property
@@ -64,8 +73,8 @@ class PortInputNode(BaseNode):
 
 class PortOutputNode(BaseNode):
     """
-    The ``PortOutputNode`` class is the node object that represents a port
-    from a :class:`NodeGraphQt.GroupNode` when expanded in a
+    The ``PortOutputNode`` class is the node object that represents a port from a
+    :class:`NodeGraphQt.GroupNode` when expanded in a
     :class:`NodeGraphQt.SubGraph`.
 
     **Inherited from:** :class:`NodeGraphQt.BaseNode`
@@ -78,10 +87,12 @@ class PortOutputNode(BaseNode):
 
     NODE_NAME = 'OutputPort'
 
-    def __init__(self, qgraphics_item=None, parent_port=None):
-        super(PortOutputNode, self).__init__(
-            qgraphics_item or PortOutputNodeItem
-        )
+    def __init__(self, qgraphics_views=None, parent_port=None):
+        qgraphics_views = qgraphics_views or {
+            NODE_LAYOUT_HORIZONTAL: PortOutputNodeItem,
+            NODE_LAYOUT_VERTICAL: PortOutputNodeVerticalItem
+        }
+        super(PortOutputNode, self).__init__(qgraphics_views)
         self._parent_port = parent_port
 
     @property
