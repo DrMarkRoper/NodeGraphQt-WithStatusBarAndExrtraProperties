@@ -968,7 +968,9 @@ class NodeGraph(QtCore.QObject):
         node.NODE_NAME = self.get_unique_name(node.NODE_NAME)
         node.model._graph_model = self.model
         node.model.name = node.NODE_NAME
-        node.set_default_theme(self._default_theme)
+        default_theme_op = getattr(node, "set_default_theme", None)
+        if default_theme_op:
+            node.set_default_theme(self._default_theme)
         node.update()
 
         if push_undo:
