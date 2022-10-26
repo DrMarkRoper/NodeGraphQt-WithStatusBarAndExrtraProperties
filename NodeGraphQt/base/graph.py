@@ -1338,11 +1338,14 @@ class NodeGraph(QtCore.QObject):
                         prop in node.view.widgets
                     ):
                         node.view.widgets[prop].set_value(val)
+                
+                nodes[n_id] = node
+                self.add_node(node, n_data.get('pos'))
 
                 # create custom products which were originally added after node creation
                 if n_data.get('custom_property_data'):
                     for prop_data in n_data['custom_property_data']:
-                        if not node.has_property(prop):
+                        if not node.has_property(prop_data['name']):
                             node.create_property(name=prop_data['name'], 
                                                 value=prop_data['value'], 
                                                 widget_type=prop_data.get('widget_type'),
@@ -1355,9 +1358,6 @@ class NodeGraph(QtCore.QObject):
                     node._view.set_default_theme(self._default_theme, True)
                 if n_data.get('theme_overrides'):
                     node._view.set_theme_items(n_data['theme_overrides'])
-                
-                nodes[n_id] = node
-                self.add_node(node, n_data.get('pos'))
 
                 if n_data.get('port_deletion_allowed', None):
                     node.set_ports({
