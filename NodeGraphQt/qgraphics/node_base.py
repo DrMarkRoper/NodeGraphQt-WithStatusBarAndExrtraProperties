@@ -899,6 +899,9 @@ class NodeItem(AbstractNodeItem):
             self._theme['node_progress_bar_background_color'] = background_color
         if color:
             self._theme['node_progress_bar_color'] = color
+        if self.scene():
+            self.post_init()
+        self.update()
 
     def get_progress_bar_percent(self):
         return self._theme['node_progress_bar_percent']
@@ -916,6 +919,9 @@ class NodeItem(AbstractNodeItem):
             self._theme['node_progress_bar_block_count'] = block_count
         if background_color:
             self._theme['node_progress_bar_background_color'] = background_color
+        if self.scene():
+            self.post_init()
+        self.update()
 
     def get_progress_bar_block_colors(self):
         return self._theme['node_progress_bar_block_colors']
