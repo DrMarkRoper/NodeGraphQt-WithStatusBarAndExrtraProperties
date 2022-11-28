@@ -114,6 +114,7 @@ class NodeModel(object):
 
         # Custom
         self._custom_prop = {}
+        self._custom_prop_extra = {}
 
         # node graph model set at node added time.
         self._graph_model = None
@@ -167,8 +168,9 @@ class NodeModel(object):
         if name in self._custom_prop.keys():
             raise NodePropertyError(
                 '"{}" property already exists.'.format(name))
-
         self._custom_prop[name] = value
+        if extra:
+            self._custom_prop_extra[name] = extra
 
         if self._graph_model is None:
             self._TEMP_property_widget_types[name] = widget_type
@@ -177,8 +179,6 @@ class NodeModel(object):
                 self._TEMP_property_attrs[name]['items'] = items
             if range:
                 self._TEMP_property_attrs[name]['range'] = range
-            if extra:
-                self._TEMP_property_attrs[name]['extra'] = extra
         else:
             attrs = {self.type_: {name: {
                 'widget_type': widget_type,
@@ -188,8 +188,6 @@ class NodeModel(object):
                 attrs[self.type_][name]['items'] = items
             if range:
                 attrs[self.type_][name]['range'] = range
-            if extra:
-                attrs[self.type_][name]['extra'] = extra
             self._graph_model.set_node_common_properties(attrs)
 
     def set_property(self, name, value):
@@ -243,22 +241,13 @@ class NodeModel(object):
         return None
 
     def get_property_extra(self, name):
-        model = self._graph_model
-        if model is None:
-            attrs = self._TEMP_property_attrs.get(name)
-            if attrs:
-                return attrs[name].get('extra')
-            return None
-        if 'extra' in model.get_node_common_properties(self.type_)[name]:
-            return model.get_node_common_properties(self.type_)[name]['extra']
-        return None
+        return self._custom_prop_extra.get(name)
 
-    def set_property_extra(self, name, extra):
-        model = self._graph_model
-        if model is None:
-            self._TEMP_property_attrs[name]['extra'] = extra
+    def set_property_extra(self, name, value):
+        if name in self._custom_prop_extra.keys():
+            self._custom_prop_extra[name] = value
         else:
-            model.get_node_common_properties(self.type_)[name]['extra'] = extra
+            raise NodePropertyError('No property extra"{}"'.format(name))
 
     @property
     def properties(self):
@@ -353,6 +342,7 @@ class NodeModel(object):
         if self.subgraph_session:
             node_dict['subgraph_session'] = self.subgraph_session
 
+        custom_props_extra = node_dict.pop('_custom_prop_extra', {}) #remove and add as 'extra' below
         custom_props = node_dict.pop('_custom_prop', {})
         if custom_props:
             node_dict['custom'] = custom_props
@@ -411,8 +401,7 @@ class NodeGraphModel(object):
                             'widget_type': 0,
                             'tab': 'Properties',
                             'items': ['foo', 'bar', 'test'],
-                            'range': (0, 100),
-                            'extra': {object}
+                            'range': (0, 100)
                             }
                         }
                     }
@@ -431,8 +420,7 @@ class NodeGraphModel(object):
                             'widget_type': 0,
                             'tab': 'Properties',
                             'items': ['foo', 'bar', 'test'],
-                            'range': (0, 100),
-                            'extra': {object}
+                            'range': (0, 100)
                             }
                         }
                     }
